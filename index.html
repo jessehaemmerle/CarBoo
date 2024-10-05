@@ -38,27 +38,45 @@
   <!-- Main Content -->
   <main>
     
-    <!-- Asset List Section -->
-    <section id="asset-list-section" class="hidden">
-      <h2>Assets</h2>
-      <div class="asset-controls">
-        <button id="add-asset-btn">Add New Asset</button>
-        <input type="text" id="asset-search-input" placeholder="Search assets...">
-      </div>
-      <table id="asset-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Number Plate</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Asset rows will be populated here by app.js -->
-        </tbody>
-      </table>
-    </section>
+    <!-- Asset Management Section -->
+<section id="asset-list-section" class="hidden">
+  <h2>Asset Management</h2>
+  
+  <!-- Add Asset Button (Visible to Admins) -->
+  <button id="add-asset-btn" class="hidden">Add New Asset</button>
+  
+  <!-- Asset Controls: Search and Filters -->
+  <div class="asset-controls">
+    <!-- Search Input -->
+    <input type="text" id="asset-search-input" placeholder="Search assets...">
+    
+    <!-- Status Filter Dropdown -->
+    <select id="asset-status-filter">
+      <option value="all">All Statuses</option>
+      <option value="green">Available</option>
+      <option value="yellow">Booked Soon</option>
+      <option value="red">Currently Booked</option>
+    </select>
+    
+    
+  </div>
+  
+  <!-- Assets Table -->
+  <table id="asset-table">
+    <thead>
+      <tr>
+        <th>Asset Name</th>
+        <th>Number Plate</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Asset rows will be dynamically populated here -->
+    </tbody>
+  </table>
+</section>
+
     
     <!-- Asset Modal (Add/Edit) -->
     <div id="asset-modal" class="modal hidden">

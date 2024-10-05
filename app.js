@@ -37,6 +37,7 @@ const assetForm = document.getElementById('asset-form');
 const assetNameInput = document.getElementById('asset-name-input');
 const assetNumberPlateInput = document.getElementById('asset-number-plate-input');
 const assetModalTitle = document.getElementById('asset-modal-title');
+const assetStatusFilter = document.getElementById('asset-status-filter');
 
 // Booking Management
 const bookingSection = document.getElementById('booking-section');
@@ -60,7 +61,7 @@ const bookingTableBody = document.querySelector('#booking-table tbody');
 const darkModeToggle = document.getElementById('dark-mode-toggle');
 
 // ====================
-// 3. Authentication State Handling
+// 3. Application State Variables
 // ====================
 
 let currentUser = null;
@@ -73,7 +74,10 @@ let currentDate = new Date();
 let bookings = [];
 let editingBookingId = null;
 
-// Listen for authentication state changes
+// ====================
+// 4. Authentication State Handling
+// ====================
+
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     currentUser = user;
@@ -107,7 +111,10 @@ function updateUserInterface() {
       <span>Welcome, ${currentUser.email} (${currentUserRole})</span>
       <button id="logout-btn">Logout</button>
     `;
-    document.getElementById('logout-btn').addEventListener('click', logout);
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', logout);
+    }
 
     // Show or hide admin controls based on role
     if (currentUserRole === 'admin') {
@@ -135,26 +142,28 @@ async function logout() {
 }
 
 // ====================
-// 4. Dark Mode Functions
+// 5. Dark Mode Functions
 // ====================
 
 // Function to apply dark mode
 function applyDarkMode(isDark) {
   if (isDark) {
     document.body.classList.add('dark-mode');
-    darkModeToggle.checked = true;
+    if (darkModeToggle) darkModeToggle.checked = true;
   } else {
     document.body.classList.remove('dark-mode');
-    darkModeToggle.checked = false;
+    if (darkModeToggle) darkModeToggle.checked = false;
   }
   // Save preference to localStorage
   localStorage.setItem('darkMode', isDark);
 }
 
 // Event listener for Dark Mode Toggle
-darkModeToggle.addEventListener('change', (e) => {
-  applyDarkMode(e.target.checked);
-});
+if (darkModeToggle) {
+  darkModeToggle.addEventListener('change', (e) => {
+    applyDarkMode(e.target.checked);
+  });
+}
 
 // Initialize Dark Mode based on saved preference
 function initializeDarkMode() {
@@ -170,7 +179,7 @@ function initializeDarkMode() {
 initializeDarkMode();
 
 // ====================
-// 5. Asset Management Functions
+// 6. Asset Management Functions
 // ====================
 
 // Function to fetch and display assets
@@ -209,13 +218,21 @@ async function displayAssets() {
   }
 }
 
-// Function to filter and display assets based on search query
 function filterAndDisplayAssets() {
   const searchQuery = assetSearchInput.value.trim().toLowerCase();
+  const selectedStatus = assetStatusFilter.value; // Get the selected status
+
   const filteredAssets = allAssets.filter((asset) => {
     const nameMatch = asset.name.toLowerCase().includes(searchQuery);
     const numberPlateMatch = asset.number_plate.toLowerCase().includes(searchQuery);
-    return nameMatch || numberPlateMatch;
+
+    // Determine asset status
+    const assetStatus = determineAssetStatus(asset.id);
+
+    // Check if the asset matches the selected status
+    const statusMatch = selectedStatus === 'all' || assetStatus === selectedStatus;
+
+    return (nameMatch || numberPlateMatch) && statusMatch;
   });
 
   assetTableBody.innerHTML = '';
@@ -243,6 +260,7 @@ function filterAndDisplayAssets() {
     assetTableBody.innerHTML = '<tr><td colspan="4">No assets found.</td></tr>';
   }
 }
+
 
 // Function to determine the status of an asset
 function determineAssetStatus(assetId) {
@@ -312,119 +330,137 @@ function getStatusIcon(status) {
 }
 
 // Event listener for the asset search input
-assetSearchInput.addEventListener('input', () => {
-  filterAndDisplayAssets();
-});
+if (assetSearchInput) {
+  assetSearchInput.addEventListener('input', () => {
+    filterAndDisplayAssets();
+  });
+}
+
+//Event listener for Asset Filtering
+if (assetStatusFilter) {
+  assetStatusFilter.addEventListener('change', () => {
+    filterAndDisplayAssets();
+  });
+}
+
 
 // Event listener for "Add New Asset" button
-addAssetBtn.addEventListener('click', () => {
-  if (currentUserRole !== 'admin') {
-    alert('You do not have permission to add assets.');
-    return;
-  }
-  editingAssetId = null;
-  assetModalTitle.textContent = 'Add New Asset';
-  assetNameInput.value = '';
-  assetNumberPlateInput.value = '';
-  assetModal.classList.remove('hidden');
-});
+if (addAssetBtn) {
+  addAssetBtn.addEventListener('click', () => {
+    if (currentUserRole !== 'admin') {
+      alert('You do not have permission to add assets.');
+      return;
+    }
+    editingAssetId = null;
+    assetModalTitle.textContent = 'Add New Asset';
+    assetNameInput.value = '';
+    assetNumberPlateInput.value = '';
+    assetModal.classList.remove('hidden');
+  });
+}
 
 // Event listener to close the asset modal
-closeAssetModalBtn.addEventListener('click', () => {
-  assetModal.classList.add('hidden');
-});
+if (closeAssetModalBtn) {
+  closeAssetModalBtn.addEventListener('click', () => {
+    assetModal.classList.add('hidden');
+  });
+}
 
 // Handle Asset Form Submission (Add or Edit)
-assetForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const name = assetNameInput.value.trim();
-  const number_plate = assetNumberPlateInput.value.trim();
+if (assetForm) {
+  assetForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = assetNameInput.value.trim();
+    const number_plate = assetNumberPlateInput.value.trim();
 
-  if (currentUserRole !== 'admin') {
-    alert('You do not have permission to perform this action.');
-    return;
-  }
-
-  try {
-    if (editingAssetId !== null) {
-      // Update existing asset
-      await db.collection('assets').doc(editingAssetId).update({
-        name,
-        number_plate,
-        updated_at: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      alert('Asset updated successfully.');
-    } else {
-      // Create new asset
-      await db.collection('assets').add({
-        name,
-        number_plate,
-        company_id: currentUserCompanyId,
-        created_at: firebase.firestore.FieldValue.serverTimestamp(),
-        updated_at: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      alert('Asset added successfully.');
+    if (currentUserRole !== 'admin') {
+      alert('You do not have permission to perform this action.');
+      return;
     }
-    assetModal.classList.add('hidden');
-    assetForm.reset();
-    await displayAssets();
-  } catch (error) {
-    console.error('Error saving asset:', error);
-    alert('An error occurred while saving the asset.');
-  }
-});
+
+    try {
+      if (editingAssetId !== null) {
+        // Update existing asset
+        await db.collection('assets').doc(editingAssetId).update({
+          name,
+          number_plate,
+          updated_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert('Asset updated successfully.');
+      } else {
+        // Create new asset
+        await db.collection('assets').add({
+          name,
+          number_plate,
+          company_id: currentUserCompanyId,
+          created_at: firebase.firestore.FieldValue.serverTimestamp(),
+          updated_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert('Asset added successfully.');
+      }
+      assetModal.classList.add('hidden');
+      assetForm.reset();
+      await displayAssets();
+    } catch (error) {
+      console.error('Error saving asset:', error);
+      alert('An error occurred while saving the asset.');
+    }
+  });
+}
 
 // Delegate Edit and Delete Button Clicks within the asset table
-assetTableBody.addEventListener('click', async (e) => {
-  const assetId = e.target.getAttribute('data-id');
-  if (e.target.classList.contains('edit-asset-btn')) {
-    if (currentUserRole !== 'admin') {
-      alert('You do not have permission to edit assets.');
-      return;
-    }
-    editingAssetId = assetId;
-    const assetDoc = await db.collection('assets').doc(assetId).get();
-    if (assetDoc.exists) {
-      const assetData = assetDoc.data();
-      assetModalTitle.textContent = 'Edit Asset';
-      assetNameInput.value = assetData.name;
-      assetNumberPlateInput.value = assetData.number_plate;
-      assetModal.classList.remove('hidden');
-    }
-  } else if (e.target.classList.contains('delete-asset-btn')) {
-    if (currentUserRole !== 'admin') {
-      alert('You do not have permission to delete assets.');
-      return;
-    }
-    const confirmDelete = confirm('Are you sure you want to delete this asset? This will also delete all associated bookings.');
-    if (confirmDelete) {
-      try {
-        // Delete associated bookings
-        const bookingsSnapshot = await db.collection('bookings')
-          .where('asset_id', '==', assetId)
-          .get();
-        const batch = db.batch();
-        bookingsSnapshot.forEach(doc => {
-          batch.delete(doc.ref);
-        });
-        await batch.commit();
-
-        // Delete the asset
-        await db.collection('assets').doc(assetId).delete();
-        alert('Asset and its bookings deleted successfully.');
-        await displayAssets();
-      } catch (error) {
-        console.error('Error deleting asset:', error);
-        alert('An error occurred while deleting the asset.');
+if (assetTableBody) {
+  assetTableBody.addEventListener('click', async (e) => {
+    const assetId = e.target.getAttribute('data-id');
+    if (e.target.classList.contains('edit-asset-btn')) {
+      if (currentUserRole !== 'admin') {
+        alert('You do not have permission to edit assets.');
+        return;
       }
+      editingAssetId = assetId;
+      const assetDoc = await db.collection('assets').doc(assetId).get();
+      if (assetDoc.exists) {
+        const assetData = assetDoc.data();
+        assetModalTitle.textContent = 'Edit Asset';
+        assetNameInput.value = assetData.name;
+        assetNumberPlateInput.value = assetData.number_plate;
+        assetModal.classList.remove('hidden');
+      }
+    } else if (e.target.classList.contains('delete-asset-btn')) {
+      if (currentUserRole !== 'admin') {
+        alert('You do not have permission to delete assets.');
+        return;
+      }
+      const confirmDelete = confirm('Are you sure you want to delete this asset? This will also delete all associated bookings.');
+      if (confirmDelete) {
+        try {
+          // Delete associated bookings
+          const bookingsSnapshot = await db.collection('bookings')
+            .where('asset_id', '==', assetId)
+            .get();
+          const batch = db.batch();
+          bookingsSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+          await batch.commit();
+
+          // Delete the asset
+          await db.collection('assets').doc(assetId).delete();
+          alert('Asset and its bookings deleted successfully.');
+          await displayAssets();
+        } catch (error) {
+          console.error('Error deleting asset:', error);
+          alert('An error occurred while deleting the asset.');
+        }
+      }
+    } else if (e.target.classList.contains('view-bookings-btn')) {
+      showBookingSection(assetId);
     }
-  } else if (e.target.classList.contains('view-bookings-btn')) {
-    showBookingSection(assetId);
-  }
-});
+  });
+}
 
 // ====================
-// 6. Booking Management Functions
+// 7. Booking Management Functions
 // ====================
 
 // Function to show Booking Section
@@ -462,6 +498,8 @@ async function loadBookings() {
 
 // Function to display bookings in a list
 function displayBookingsList() {
+  if (!bookingTableBody) return;
+
   bookingTableBody.innerHTML = '';
   bookings.forEach((booking) => {
     const row = document.createElement('tr');
@@ -489,149 +527,163 @@ function isBookingOwner(booking) {
 }
 
 // Delegate Booking Button Clicks
-bookingTableBody.addEventListener('click', async (e) => {
-  const bookingId = e.target.getAttribute('data-id');
-  if (e.target.classList.contains('edit-booking-btn')) {
-    if (currentUserRole !== 'admin' && !isBookingOwner(bookings.find(b => b.id === bookingId))) {
-      alert('You do not have permission to edit this booking.');
-      return;
-    }
-    editingBookingId = bookingId;
-    const booking = bookings.find(b => b.id === bookingId);
-    if (booking) {
-      bookingStartDateInput.value = booking.start_date;
-      bookingEndDateInput.value = booking.end_date;
-      bookingModalTitle.textContent = `Edit Booking for ${bookingAssetNameSpan.textContent}`;
-      bookingModal.classList.remove('hidden');
-    }
-  } else if (e.target.classList.contains('delete-booking-btn')) {
-    if (currentUserRole !== 'admin' && !isBookingOwner(bookings.find(b => b.id === bookingId))) {
-      alert('You do not have permission to delete this booking.');
-      return;
-    }
-    const confirmDelete = confirm('Are you sure you want to delete this booking?');
-    if (confirmDelete) {
-      try {
-        await db.collection('bookings').doc(bookingId).delete();
-        alert('Booking deleted successfully.');
-        await loadBookings();
-        renderCalendar();
-        await displayAssets(); // Refresh asset statuses after booking deletion
-      } catch (error) {
-        console.error('Error deleting booking:', error);
-        alert('An error occurred while deleting the booking.');
+if (bookingTableBody) {
+  bookingTableBody.addEventListener('click', async (e) => {
+    const bookingId = e.target.getAttribute('data-id');
+    if (e.target.classList.contains('edit-booking-btn')) {
+      if (currentUserRole !== 'admin' && !isBookingOwner(bookings.find(b => b.id === bookingId))) {
+        alert('You do not have permission to edit this booking.');
+        return;
+      }
+      editingBookingId = bookingId;
+      const booking = bookings.find(b => b.id === bookingId);
+      if (booking) {
+        bookingStartDateInput.value = booking.start_date;
+        bookingEndDateInput.value = booking.end_date;
+        bookingModalTitle.textContent = `Edit Booking for ${bookingAssetNameSpan.textContent}`;
+        bookingModal.classList.remove('hidden');
+      }
+    } else if (e.target.classList.contains('delete-booking-btn')) {
+      if (currentUserRole !== 'admin' && !isBookingOwner(bookings.find(b => b.id === bookingId))) {
+        alert('You do not have permission to delete this booking.');
+        return;
+      }
+      const confirmDelete = confirm('Are you sure you want to delete this booking?');
+      if (confirmDelete) {
+        try {
+          await db.collection('bookings').doc(bookingId).delete();
+          alert('Booking deleted successfully.');
+          await loadBookings();
+          renderCalendar();
+          await displayAssets(); // Refresh asset statuses after booking deletion
+        } catch (error) {
+          console.error('Error deleting booking:', error);
+          alert('An error occurred while deleting the booking.');
+        }
       }
     }
-  }
-});
+  });
+}
 
 // Back to Assets Button
-backToAssetsBtn.addEventListener('click', async () => {
-  bookingSection.classList.add('hidden');
-  assetListSection.classList.remove('hidden');
-  await displayAssets(); // Refresh asset statuses when returning
-});
+if (backToAssetsBtn) {
+  backToAssetsBtn.addEventListener('click', async () => {
+    bookingSection.classList.add('hidden');
+    assetListSection.classList.remove('hidden');
+    await displayAssets(); // Refresh asset statuses when returning
+  });
+}
 
 // Add Booking Button
-addBookingBtn.addEventListener('click', () => {
-  editingBookingId = null;
-  bookingModalTitle.textContent = `Add New Booking for ${bookingAssetNameSpan.textContent}`;
-  bookingStartDateInput.value = '';
-  bookingEndDateInput.value = '';
-  bookingModal.classList.remove('hidden');
-});
+if (addBookingBtn) {
+  addBookingBtn.addEventListener('click', () => {
+    editingBookingId = null;
+    bookingModalTitle.textContent = `Add New Booking for ${bookingAssetNameSpan.textContent}`;
+    bookingStartDateInput.value = '';
+    bookingEndDateInput.value = '';
+    bookingModal.classList.remove('hidden');
+  });
+}
 
 // Close Booking Modal
-closeBookingModalBtn.addEventListener('click', () => {
-  bookingModal.classList.add('hidden');
-  editingBookingId = null;
-});
+if (closeBookingModalBtn) {
+  closeBookingModalBtn.addEventListener('click', () => {
+    bookingModal.classList.add('hidden');
+    editingBookingId = null;
+  });
+}
 
 // Handle Booking Form Submission (Add or Edit)
-bookingForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const start_date = bookingStartDateInput.value;
-  const end_date = bookingEndDateInput.value;
+if (bookingForm) {
+  bookingForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const start_date = bookingStartDateInput.value;
+    const end_date = bookingEndDateInput.value;
 
-  if (new Date(start_date) > new Date(end_date)) {
-    alert('End date cannot be before start date.');
-    return;
-  }
-
-  try {
-    // Conflict Detection: Check for overlapping bookings
-    const overlappingBookingsSnapshot = await db.collection('bookings')
-      .where('asset_id', '==', currentAssetId)
-      .where('company_id', '==', currentUserCompanyId)
-      .get();
-
-    const hasConflict = overlappingBookingsSnapshot.docs.some(doc => {
-      const booking = doc.data();
-      if (editingBookingId && doc.id === editingBookingId) {
-        // Skip the booking being edited
-        return false;
-      }
-      const existingStart = new Date(booking.start_date);
-      const existingEnd = new Date(booking.end_date);
-      const newStart = new Date(start_date);
-      const newEnd = new Date(end_date);
-      return (newStart <= existingEnd && newEnd >= existingStart);
-    });
-
-    if (hasConflict) {
-      alert('The selected dates conflict with an existing booking for this asset.');
+    if (new Date(start_date) > new Date(end_date)) {
+      alert('End date cannot be before start date.');
       return;
     }
 
-    if (editingBookingId !== null) {
-      // Update existing booking
-      await db.collection('bookings').doc(editingBookingId).update({
-        start_date,
-        end_date,
-        updated_at: firebase.firestore.FieldValue.serverTimestamp()
+    try {
+      // Conflict Detection: Check for overlapping bookings
+      const overlappingBookingsSnapshot = await db.collection('bookings')
+        .where('asset_id', '==', currentAssetId)
+        .where('company_id', '==', currentUserCompanyId)
+        .get();
+
+      const hasConflict = overlappingBookingsSnapshot.docs.some(doc => {
+        const booking = doc.data();
+        if (editingBookingId && doc.id === editingBookingId) {
+          // Skip the booking being edited
+          return false;
+        }
+        const existingStart = new Date(booking.start_date);
+        const existingEnd = new Date(booking.end_date);
+        const newStart = new Date(start_date);
+        const newEnd = new Date(end_date);
+        return (newStart <= existingEnd && newEnd >= existingStart);
       });
-      alert('Booking updated successfully.');
-    } else {
-      // Create new booking
-      await db.collection('bookings').add({
-        asset_id: currentAssetId,
-        user_id: currentUser.uid,
-        company_id: currentUserCompanyId,
-        start_date,
-        end_date,
-        created_at: firebase.firestore.FieldValue.serverTimestamp(),
-        updated_at: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      alert('Booking created successfully.');
+
+      if (hasConflict) {
+        alert('The selected dates conflict with an existing booking for this asset.');
+        return;
+      }
+
+      if (editingBookingId !== null) {
+        // Update existing booking
+        await db.collection('bookings').doc(editingBookingId).update({
+          start_date,
+          end_date,
+          updated_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert('Booking updated successfully.');
+      } else {
+        // Create new booking
+        await db.collection('bookings').add({
+          asset_id: currentAssetId,
+          user_id: currentUser.uid,
+          company_id: currentUserCompanyId,
+          start_date,
+          end_date,
+          created_at: firebase.firestore.FieldValue.serverTimestamp(),
+          updated_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert('Booking created successfully.');
+      }
+      bookingModal.classList.add('hidden');
+      bookingForm.reset();
+      await loadBookings();
+      renderCalendar();
+      await displayAssets(); // Refresh asset statuses after booking
+    } catch (error) {
+      console.error('Error saving booking:', error);
+      alert('An error occurred while saving the booking.');
     }
-    bookingModal.classList.add('hidden');
-    bookingForm.reset();
-    await loadBookings();
-    renderCalendar();
-    await displayAssets(); // Refresh asset statuses after booking
-  } catch (error) {
-    console.error('Error saving booking:', error);
-    alert('An error occurred while saving the booking.');
-  }
-});
+  });
+}
 
 // ====================
 // 7. Calendar Rendering
 // ====================
 
 // Calendar Navigation Buttons
-prevMonthBtn.addEventListener('click', () => {
-  currentDate.setMonth(currentDate.getMonth() - 1);
-  renderCalendar();
-});
+if (prevMonthBtn && nextMonthBtn) {
+  prevMonthBtn.addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar();
+  });
 
-nextMonthBtn.addEventListener('click', () => {
-  currentDate.setMonth(currentDate.getMonth() + 1);
-  renderCalendar();
-});
+  nextMonthBtn.addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar();
+  });
+}
 
 // Render Calendar
 function renderCalendar() {
+  if (!calendarDiv) return;
+
   // Clear existing calendar
   calendarDiv.innerHTML = '';
 
@@ -645,7 +697,9 @@ function renderCalendar() {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  calendarMonthYear.textContent = `${monthNames[month]} ${year}`;
+  if (calendarMonthYear) {
+    calendarMonthYear.textContent = `${monthNames[month]} ${year}`;
+  }
 
   // Days of the week headers
   const daysHeader = document.createElement('div');
@@ -728,26 +782,10 @@ function formatDateToYYYYMMDD(dateStr) {
   return `${year}-${month}-${day}`;
 }
 
-
 // ====================
-// 9. Apply Theme Based on Preference
+// 9. Ensure Theme Consistency on All Pages
 // ====================
 
-// Function to apply the theme based on preference
-function applyTheme(isDark) {
-  if (isDark) {
-    document.body.classList.add('dark-mode');
-  } else {
-    document.body.classList.remove('dark-mode');
-  }
-}
+// Note: The duplicated theme handling at the end has been removed to prevent conflicts.
+// The theme is now consistently handled using the 'darkMode' key in localStorage.
 
-// Load theme preference on page load
-window.addEventListener('DOMContentLoaded', () => {
-  const theme = localStorage.getItem('theme');
-  if (theme === 'dark') {
-    applyTheme(true);
-  } else {
-    applyTheme(false);
-  }
-});
