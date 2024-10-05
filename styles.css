@@ -1,0 +1,394 @@
+/* styles.css */
+
+/* General Styles */
+body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f6f8;
+  color: #333;
+}
+
+nav {
+  background-color: #34495e;
+  color: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav h1 {
+  font-weight: 700;
+}
+
+main {
+  padding: 20px 30px;
+}
+
+/* Headings */
+h1, h2 {
+  margin: 0 0 20px 0;
+  font-weight: 500;
+}
+
+h2 {
+  font-size: 1.5em;
+}
+
+/* Asset Controls */
+.asset-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.asset-controls input {
+  width: 250px;
+  padding: 8px 12px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+/* Buttons */
+button {
+  padding: 8px 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background-color: #2980b9;
+  color: white;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #1f6391;
+}
+
+button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+button.hidden {
+  display: none;
+}
+
+button.secondary {
+  background-color: #7f8c8d;
+}
+
+button.secondary:hover {
+  background-color: #606f7b;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+table, th, td {
+  border: none;
+}
+
+th, td {
+  padding: 15px 20px;
+  text-align: left;
+}
+
+th {
+  background-color: #ecf0f1;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Status Icons */
+.status-icon {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+}
+
+/* Modals */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(52, 73, 94, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 30px 40px;
+  width: 450px;
+  border-radius: 8px;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-50px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 24px;
+  color: #7f8c8d;
+  cursor: pointer;
+  transition: color 0.2s ease-in-out;
+}
+
+.close-btn:hover {
+  color: #2c3e50;
+}
+
+/* Forms */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+form label {
+  margin: 15px 0 5px 0;
+  font-weight: 500;
+}
+
+form input, form select {
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+}
+
+form button {
+  margin-top: 25px;
+  padding: 12px;
+  background-color: #27ae60;
+  color: white;
+  font-size: 16px;
+}
+
+form button:hover {
+  background-color: #1e8449;
+}
+
+/* Calendar */
+#calendar {
+  margin: 30px 0;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#calendar-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #ecf0f1;
+  padding: 15px;
+}
+
+#calendar-header button {
+  background-color: #2980b9;
+  margin: 0 20px;
+}
+
+#calendar-header button:hover {
+  background-color: #1f6391;
+}
+
+#calendar-month-year {
+  font-size: 1.2em;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.calendar-header, .calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-day-header, .calendar-day {
+  border: 1px solid #bdc3c7;
+  padding: 10px;
+  text-align: center;
+  position: relative;
+}
+
+.calendar-day-header {
+  background-color: #bdc3c7;
+  color: white;
+  font-weight: 500;
+}
+
+.calendar-day.empty {
+  background-color: #f9f9f9;
+}
+
+.day-number {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+/* Booking Bars */
+.booking-bar {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  right: 5px;
+  height: 8px;
+  background-color: #e74c3c;
+  border-radius: 4px;
+}
+
+/* Bookings Table */
+#booking-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#booking-table, #booking-table th, #booking-table td {
+  border: none;
+}
+
+#booking-table th, #booking-table td {
+  padding: 15px 20px;
+  text-align: left;
+}
+
+#booking-table th {
+  background-color: #ecf0f1;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+#booking-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Status Icons */
+.status-icon {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+/* Status Tooltip */
+.status-icon::after {
+  content: attr(title);
+  visibility: hidden;
+  opacity: 0;
+  width: max-content;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%; /* Position above the icon */
+  left: 50%;
+  transform: translateX(-50%);
+  transition: opacity 0.3s;
+}
+
+.status-icon:hover::after {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Hidden Class */
+.hidden {
+  display: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 90%;
+    padding: 20px;
+  }
+
+  .asset-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .asset-controls button, .asset-controls input {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  #calendar-header {
+    flex-direction: column;
+  }
+
+  #calendar-header button {
+    margin: 10px 0;
+  }
+}
+
+.status-icon {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+}
+
+.status-icon.green {
+  background-color: #27ae60;
+}
+
+.status-icon.yellow {
+  background-color: #f1c40f;
+}
+
+.status-icon.red {
+  background-color: #e74c3c;
+}
+
+.status-icon.gray {
+  background-color: #7f8c8d;
+}
+

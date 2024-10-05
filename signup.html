@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Asset Booking Tool - Sign Up</title>
+  
+  <!-- Link to Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  
+</head>
+<body>
+  
+  <!-- Signup Container -->
+  <div class="auth-container">
+    <h2>Sign Up</h2>
+    
+    <!-- Error Message Container -->
+    <div id="error-message" class="error-message"></div>
+    
+    <form id="signup-form">
+      <label for="signup-email">Email:</label>
+      <input type="email" id="signup-email" required>
+      
+      <label for="signup-password">Password:</label>
+      <input type="password" id="signup-password" required>
+      
+      <label for="signup-company">Select Company:</label>
+      <select id="signup-company" required>
+        <option value="" disabled selected>Select your company</option>
+        <!-- Company options will be populated here by signup.js -->
+      </select>
+      
+      <button type="submit">Sign Up</button>
+    </form>
+    <p>Already have an account? <a href="login.html">Login</a></p>
+  </div>
+  
+  <!-- Link to Script File -->
+  <script src="signup.js"></script>
+  
+</body>
+</html>
