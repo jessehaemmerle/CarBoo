@@ -728,26 +728,26 @@ function formatDateToYYYYMMDD(dateStr) {
   return `${year}-${month}-${day}`;
 }
 
+
 // ====================
-// 9. Settings Dropdown Functionality
+// 9. Apply Theme Based on Preference
 // ====================
 
-// Toggle the visibility of the settings dropdown
-settingsBtn.addEventListener('click', () => {
-  const isHidden = settingsDropdown.classList.contains('hidden');
-  if (isHidden) {
-    settingsDropdown.classList.remove('hidden');
-    settingsBtn.setAttribute('aria-expanded', 'true');
+// Function to apply the theme based on preference
+function applyTheme(isDark) {
+  if (isDark) {
+    document.body.classList.add('dark-mode');
   } else {
-    settingsDropdown.classList.add('hidden');
-    settingsBtn.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('dark-mode');
   }
-});
+}
 
-// Close the settings dropdown when clicking outside
-window.addEventListener('click', (event) => {
-  if (!settingsBtn.contains(event.target) && !settingsDropdown.contains(event.target)) {
-    settingsDropdown.classList.add('hidden');
-    settingsBtn.setAttribute('aria-expanded', 'false');
+// Load theme preference on page load
+window.addEventListener('DOMContentLoaded', () => {
+  const theme = localStorage.getItem('theme');
+  if (theme === 'dark') {
+    applyTheme(true);
+  } else {
+    applyTheme(false);
   }
 });
