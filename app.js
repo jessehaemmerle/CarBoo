@@ -31,13 +31,13 @@ const assetListSection = document.getElementById('asset-list-section');
 const assetTableBody = document.querySelector('#asset-table tbody');
 const addAssetBtn = document.getElementById('add-asset-btn');
 const assetSearchInput = document.getElementById('asset-search-input');
+const assetStatusFilter = document.getElementById('asset-status-filter'); // Added for filtering
 const assetModal = document.getElementById('asset-modal');
 const closeAssetModalBtn = document.getElementById('close-asset-modal');
 const assetForm = document.getElementById('asset-form');
 const assetNameInput = document.getElementById('asset-name-input');
 const assetNumberPlateInput = document.getElementById('asset-number-plate-input');
 const assetModalTitle = document.getElementById('asset-modal-title');
-const assetStatusFilter = document.getElementById('asset-status-filter');
 
 // Booking Management
 const bookingSection = document.getElementById('booking-section');
@@ -46,8 +46,8 @@ const addBookingBtn = document.getElementById('add-booking-btn');
 const bookingModal = document.getElementById('booking-modal');
 const closeBookingModalBtn = document.getElementById('close-booking-modal');
 const bookingForm = document.getElementById('booking-form');
-const bookingStartDateInput = document.getElementById('booking-start-date-input');
-const bookingEndDateInput = document.getElementById('booking-end-date-input');
+const bookingStartDatetimeInput = document.getElementById('booking-start-datetime-input'); // Updated
+const bookingEndDatetimeInput = document.getElementById('booking-end-datetime-input');     // Updated
 const bookingModalTitle = document.getElementById('booking-modal-title');
 const assetNameSpan = document.getElementById('asset-name');
 const bookingAssetNameSpan = document.getElementById('booking-asset-name');
@@ -218,6 +218,7 @@ async function displayAssets() {
   }
 }
 
+// Function to filter and display assets based on search query and status filter
 function filterAndDisplayAssets() {
   const searchQuery = assetSearchInput.value.trim().toLowerCase();
   const selectedStatus = assetStatusFilter.value; // Get the selected status
@@ -261,41 +262,42 @@ function filterAndDisplayAssets() {
   }
 }
 
-
 // Function to determine the status of an asset
 function determineAssetStatus(assetId) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Normalize to midnight
-  const threeDaysFromNow = new Date(today);
-  threeDaysFromNow.setDate(today.getDate() + 3);
+  const now = new Date();
+  now.setSeconds(0, 0); // Normalize to the nearest second
+  const threeDaysFromNow = new Date(now);
+  threeDaysFromNow.setDate(now.getDate() + 3);
 
   let status = 'green'; // Default status
 
   bookings.forEach((booking) => {
     if (booking.asset_id === assetId) {
-      const bookingStart = new Date(booking.start_date);
-      const bookingEnd = new Date(booking.end_date);
-      bookingStart.setHours(0, 0, 0, 0);
-      bookingEnd.setHours(0, 0, 0, 0);
+      const bookingStart = booking.start_datetime.toDate();
+      const bookingEnd = booking.end_datetime.toDate();
 
       // Currently Booked
-      if (today >= bookingStart && today <= bookingEnd) {
+      if (now >= bookingStart && now <= bookingEnd) {
         status = 'red';
       }
 
       // Booked Tomorrow
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-      if (bookingStart.getTime() === tomorrow.getTime()) {
+      const tomorrowStart = new Date(now);
+      tomorrowStart.setDate(now.getDate() + 1);
+      tomorrowStart.setHours(0, 0, 0, 0);
+      const tomorrowEnd = new Date(tomorrowStart);
+      tomorrowEnd.setHours(23, 59, 59, 999);
+      if (bookingStart >= tomorrowStart && bookingStart <= tomorrowEnd) {
         if (status !== 'red') { // Do not override red status
           status = 'yellow';
         }
       }
 
       // Booked Within Next 3 Days
-      const bookingStartsWithinNext3Days = bookingStart > today && bookingStart <= threeDaysFromNow;
-      if (bookingStartsWithinNext3Days && status === 'green') {
-        status = 'yellow';
+      if (bookingStart > now && bookingStart <= threeDaysFromNow) {
+        if (status === 'green') {
+          status = 'yellow';
+        }
       }
     }
   });
@@ -311,19 +313,19 @@ function getStatusIcon(status) {
   switch (status) {
     case 'green':
       className = 'status-icon green';
-      ariaLabel = 'Available for the next 3 days';
+      ariaLabel = 'Available';
       break;
     case 'yellow':
       className = 'status-icon yellow';
-      ariaLabel = 'Booked tomorrow or within the next 3 days';
+      ariaLabel = 'Booked Soon';
       break;
     case 'red':
       className = 'status-icon red';
-      ariaLabel = 'Currently booked';
+      ariaLabel = 'Currently Booked';
       break;
     default:
       className = 'status-icon gray';
-      ariaLabel = 'Unknown status';
+      ariaLabel = 'Unknown Status';
   }
 
   return `<span class="${className}" aria-label="${ariaLabel}" title="${ariaLabel}"></span>`;
@@ -336,13 +338,12 @@ if (assetSearchInput) {
   });
 }
 
-//Event listener for Asset Filtering
+// Event listener for the status filter dropdown
 if (assetStatusFilter) {
   assetStatusFilter.addEventListener('change', () => {
     filterAndDisplayAssets();
   });
 }
-
 
 // Event listener for "Add New Asset" button
 if (addAssetBtn) {
@@ -502,10 +503,15 @@ function displayBookingsList() {
 
   bookingTableBody.innerHTML = '';
   bookings.forEach((booking) => {
+    const start = booking.start_datetime.toDate(); // Convert Timestamp to Date
+    const end = booking.end_datetime.toDate();
+    const formattedStart = formatDateTime(start);
+    const formattedEnd = formatDateTime(end);
+
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${formatDateToYYYYMMDD(booking.start_date)}</td>
-      <td>${formatDateToYYYYMMDD(booking.end_date)}</td>
+      <td>${formattedStart}</td>
+      <td>${formattedEnd}</td>
       <td>
         ${currentUserRole === 'admin' || isBookingOwner(booking) ? `
           <button class="edit-booking-btn" data-id="${booking.id}">Edit</button>
@@ -538,8 +544,9 @@ if (bookingTableBody) {
       editingBookingId = bookingId;
       const booking = bookings.find(b => b.id === bookingId);
       if (booking) {
-        bookingStartDateInput.value = booking.start_date;
-        bookingEndDateInput.value = booking.end_date;
+        // Set datetime inputs with ISO string format for datetime-local inputs
+        bookingStartDatetimeInput.value = formatDateTimeLocal(booking.start_datetime.toDate());
+        bookingEndDatetimeInput.value = formatDateTimeLocal(booking.end_datetime.toDate());
         bookingModalTitle.textContent = `Edit Booking for ${bookingAssetNameSpan.textContent}`;
         bookingModal.classList.remove('hidden');
       }
@@ -579,8 +586,8 @@ if (addBookingBtn) {
   addBookingBtn.addEventListener('click', () => {
     editingBookingId = null;
     bookingModalTitle.textContent = `Add New Booking for ${bookingAssetNameSpan.textContent}`;
-    bookingStartDateInput.value = '';
-    bookingEndDateInput.value = '';
+    bookingStartDatetimeInput.value = '';
+    bookingEndDatetimeInput.value = '';
     bookingModal.classList.remove('hidden');
   });
 }
@@ -597,46 +604,49 @@ if (closeBookingModalBtn) {
 if (bookingForm) {
   bookingForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const start_date = bookingStartDateInput.value;
-    const end_date = bookingEndDateInput.value;
-
-    if (new Date(start_date) > new Date(end_date)) {
-      alert('End date cannot be before start date.');
+    
+    const start_datetime = bookingStartDatetimeInput.value;
+    const end_datetime = bookingEndDatetimeInput.value;
+  
+    // Validate that end datetime is after start datetime
+    if (new Date(start_datetime) >= new Date(end_datetime)) {
+      alert('End date and time must be after start date and time.');
       return;
     }
-
+  
     try {
       // Conflict Detection: Check for overlapping bookings
       const overlappingBookingsSnapshot = await db.collection('bookings')
         .where('asset_id', '==', currentAssetId)
         .where('company_id', '==', currentUserCompanyId)
         .get();
-
+  
       const hasConflict = overlappingBookingsSnapshot.docs.some(doc => {
         const booking = doc.data();
         if (editingBookingId && doc.id === editingBookingId) {
           // Skip the booking being edited
           return false;
         }
-        const existingStart = new Date(booking.start_date);
-        const existingEnd = new Date(booking.end_date);
-        const newStart = new Date(start_date);
-        const newEnd = new Date(end_date);
-        return (newStart <= existingEnd && newEnd >= existingStart);
+        const existingStart = booking.start_datetime.toDate();
+        const existingEnd = booking.end_datetime.toDate();
+        const newStart = new Date(start_datetime);
+        const newEnd = new Date(end_datetime);
+        return (newStart < existingEnd && newEnd > existingStart);
       });
-
+  
       if (hasConflict) {
-        alert('The selected dates conflict with an existing booking for this asset.');
+        alert('The selected date and time conflict with an existing booking for this asset.');
         return;
       }
-
+  
       if (editingBookingId !== null) {
         // Update existing booking
         await db.collection('bookings').doc(editingBookingId).update({
-          start_date,
-          end_date,
+          start_datetime: firebase.firestore.Timestamp.fromDate(new Date(start_datetime)),
+          end_datetime: firebase.firestore.Timestamp.fromDate(new Date(end_datetime)),
           updated_at: firebase.firestore.FieldValue.serverTimestamp()
         });
+
         alert('Booking updated successfully.');
       } else {
         // Create new booking
@@ -644,11 +654,12 @@ if (bookingForm) {
           asset_id: currentAssetId,
           user_id: currentUser.uid,
           company_id: currentUserCompanyId,
-          start_date,
-          end_date,
+          start_datetime: firebase.firestore.Timestamp.fromDate(new Date(start_datetime)),
+          end_datetime: firebase.firestore.Timestamp.fromDate(new Date(end_datetime)),
           created_at: firebase.firestore.FieldValue.serverTimestamp(),
           updated_at: firebase.firestore.FieldValue.serverTimestamp()
         });
+
         alert('Booking created successfully.');
       }
       bookingModal.classList.add('hidden');
@@ -735,23 +746,44 @@ function renderCalendar() {
     dayNumber.textContent = day;
     dayCell.appendChild(dayNumber);
 
-    // Add booking bars
+    // Add booking bars and tooltips
     const bookingsForDay = bookings.filter((booking) => {
-      const bookingStart = new Date(booking.start_date);
-      const bookingEnd = new Date(booking.end_date);
+      const bookingStart = booking.start_datetime.toDate();
+      const bookingEnd = booking.end_datetime.toDate();
       const currentDayDate = new Date(year, month, day);
       // Normalize dates to remove time component
-      const normalizedBookingStart = new Date(bookingStart.getFullYear(), bookingStart.getMonth(), bookingStart.getDate());
-      const normalizedBookingEnd = new Date(bookingEnd.getFullYear(), bookingEnd.getMonth(), bookingEnd.getDate());
-      const normalizedCurrentDay = new Date(currentDayDate.getFullYear(), currentDayDate.getMonth(), currentDayDate.getDate());
+      const normalizedBookingStart = new Date(bookingStart.getFullYear(), bookingStart.getMonth(), bookingStart.getDate(), bookingStart.getHours(), bookingStart.getMinutes());
+      const normalizedBookingEnd = new Date(bookingEnd.getFullYear(), bookingEnd.getMonth(), bookingEnd.getDate(), bookingEnd.getHours(), bookingEnd.getMinutes());
+      const normalizedCurrentDay = new Date(currentDayDate.getFullYear(), currentDayDate.getMonth(), currentDayDate.getDate(), 0, 0, 0, 0);
       return normalizedBookingStart <= normalizedCurrentDay && normalizedBookingEnd >= normalizedCurrentDay;
     });
 
     if (bookingsForDay.length > 0) {
+      // Add a booking bar
       const bookingBar = document.createElement('div');
       bookingBar.classList.add('booking-bar');
       bookingBar.title = `${bookingsForDay.length} Booking(s)`;
       dayCell.appendChild(bookingBar);
+
+      // Add tooltip with booking times
+      const tooltip = document.createElement('div');
+      tooltip.classList.add('booking-tooltip');
+      bookingsForDay.forEach((booking) => {
+        const start = formatDateTime(booking.start_datetime.toDate());
+        const end = formatDateTime(booking.end_datetime.toDate());
+        const bookingInfo = document.createElement('div');
+        bookingInfo.textContent = `${start} - ${end}`;
+        tooltip.appendChild(bookingInfo);
+      });
+      dayCell.appendChild(tooltip);
+
+      // Show tooltip on hover
+      dayCell.addEventListener('mouseenter', () => {
+        tooltip.style.display = 'block';
+      });
+      dayCell.addEventListener('mouseleave', () => {
+        tooltip.style.display = 'none';
+      });
     }
 
     datesGrid.appendChild(dayCell);
@@ -769,23 +801,28 @@ function renderCalendar() {
   calendarDiv.appendChild(datesGrid);
 }
 
+
 // ====================
 // 8. Helper Functions
 // ====================
 
-// Format Date to YYYY-MM-DD
-function formatDateToYYYYMMDD(dateStr) {
-  const date = new Date(dateStr);
+// Format Date to a readable format, e.g., "2024-04-27 14:30"
+function formatDateTime(date) {
   const year = date.getFullYear();
   const month = ('0' + (date.getMonth() + 1)).slice(-2);
   const day = ('0' + date.getDate()).slice(-2);
-  return `${year}-${month}-${day}`;
+  const hours = ('0' + date.getHours()).slice(-2);
+  const minutes = ('0' + date.getMinutes()).slice(-2);
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
-// ====================
-// 9. Ensure Theme Consistency on All Pages
-// ====================
-
-// Note: The duplicated theme handling at the end has been removed to prevent conflicts.
-// The theme is now consistently handled using the 'darkMode' key in localStorage.
+// Format Date to 'YYYY-MM-DDTHH:MM' for datetime-local input values
+function formatDateTimeLocal(date) {
+  const year = date.getFullYear();
+  const month = ('0' + (date.getMonth() + 1)).slice(-2);
+  const day = ('0' + date.getDate()).slice(-2);
+  const hours = ('0' + date.getHours()).slice(-2);
+  const minutes = ('0' + date.getMinutes()).slice(-2);
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
 

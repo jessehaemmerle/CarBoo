@@ -44,7 +44,7 @@
   
   <!-- Add Asset Button (Visible to Admins) -->
   <button id="add-asset-btn" class="hidden">Add New Asset</button>
-  
+
   <!-- Asset Controls: Search and Filters -->
   <div class="asset-controls">
     <!-- Search Input -->
@@ -134,11 +134,11 @@
         <span class="close-btn" id="close-booking-modal">&times;</span>
         <h2 id="booking-modal-title">Add New Booking for <span id="booking-asset-name"></span></h2>
         <form id="booking-form">
-          <label for="booking-start-date-input">Start Date:</label>
-          <input type="date" id="booking-start-date-input" required>
+          <label for="booking-start-datetime-input">Start Date & Time:</label>
+          <input type="datetime-local" id="booking-start-datetime-input" required>
           
-          <label for="booking-end-date-input">End Date:</label>
-          <input type="date" id="booking-end-date-input" required>
+          <label for="booking-end-datetime-input">End Date & Time:</label>
+          <input type="datetime-local" id="booking-end-datetime-input" required>
           
           <button type="submit" id="save-booking-btn">Save</button>
         </form>
