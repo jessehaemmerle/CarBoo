@@ -31,7 +31,7 @@ const assetListSection = document.getElementById('asset-list-section');
 const assetTableBody = document.querySelector('#asset-table tbody');
 const addAssetBtn = document.getElementById('add-asset-btn');
 const assetSearchInput = document.getElementById('asset-search-input');
-const assetStatusFilter = document.getElementById('asset-status-filter'); // Added for filtering
+const assetStatusFilter = document.getElementById('asset-status-filter'); // For admin filtering
 const assetModal = document.getElementById('asset-modal');
 const closeAssetModalBtn = document.getElementById('close-asset-modal');
 const assetForm = document.getElementById('asset-form');
@@ -46,8 +46,8 @@ const addBookingBtn = document.getElementById('add-booking-btn');
 const bookingModal = document.getElementById('booking-modal');
 const closeBookingModalBtn = document.getElementById('close-booking-modal');
 const bookingForm = document.getElementById('booking-form');
-const bookingStartDatetimeInput = document.getElementById('booking-start-datetime-input'); // Updated
-const bookingEndDatetimeInput = document.getElementById('booking-end-datetime-input');     // Updated
+const bookingStartDatetimeInput = document.getElementById('booking-start-datetime-input'); // For datetime
+const bookingEndDatetimeInput = document.getElementById('booking-end-datetime-input');     // For datetime
 const bookingModalTitle = document.getElementById('booking-modal-title');
 const assetNameSpan = document.getElementById('asset-name');
 const bookingAssetNameSpan = document.getElementById('booking-asset-name');
@@ -116,14 +116,30 @@ function updateUserInterface() {
       logoutBtn.addEventListener('click', logout);
     }
 
-    // Show or hide admin controls based on role
     if (currentUserRole === 'admin') {
+      // Show admin controls
       addAssetBtn.style.display = 'inline-block';
+      if (addBookingBtn) addBookingBtn.style.display = 'inline-block';
+      if (assetStatusFilter) {
+        assetStatusFilter.style.display = 'inline-block';
+        assetStatusFilter.disabled = false; // Allow admin to change filters
+      }
     } else {
+      // Hide admin controls for regular users
       addAssetBtn.style.display = 'none';
+      if (addBookingBtn) addBookingBtn.style.display = 'none';
+      if (assetStatusFilter) {
+        assetStatusFilter.style.display = 'none';
+        assetStatusFilter.value = 'green'; // Force status to 'green' for users
+      }
     }
 
     assetListSection.classList.remove('hidden');
+
+    // Hide booking section if user is not admin
+    if (currentUserRole !== 'admin') {
+      bookingSection.classList.add('hidden');
+    }
   } else {
     userInfoDiv.innerHTML = '';
   }
@@ -221,7 +237,11 @@ async function displayAssets() {
 // Function to filter and display assets based on search query and status filter
 function filterAndDisplayAssets() {
   const searchQuery = assetSearchInput.value.trim().toLowerCase();
-  const selectedStatus = assetStatusFilter.value; // Get the selected status
+  let selectedStatus = assetStatusFilter.value; // Get the selected status
+
+  if (currentUserRole !== 'admin') {
+    selectedStatus = 'green'; // Force status to 'green' for users
+  }
 
   const filteredAssets = allAssets.filter((asset) => {
     const nameMatch = asset.name.toLowerCase().includes(searchQuery);
@@ -247,8 +267,8 @@ function filterAndDisplayAssets() {
       <td>${asset.number_plate}</td>
       <td>${statusIcon}</td>
       <td>
-        <button class="view-bookings-btn" data-id="${asset.id}">View Bookings</button>
         ${currentUserRole === 'admin' ? `
+          <button class="view-bookings-btn" data-id="${asset.id}">View Bookings</button>
           <button class="edit-asset-btn" data-id="${asset.id}">Edit</button>
           <button class="delete-asset-btn" data-id="${asset.id}">Delete</button>
         ` : ''}
@@ -455,6 +475,10 @@ if (assetTableBody) {
         }
       }
     } else if (e.target.classList.contains('view-bookings-btn')) {
+      if (currentUserRole !== 'admin') {
+        alert('You do not have permission to view bookings.');
+        return;
+      }
       showBookingSection(assetId);
     }
   });
@@ -584,6 +608,10 @@ if (backToAssetsBtn) {
 // Add Booking Button
 if (addBookingBtn) {
   addBookingBtn.addEventListener('click', () => {
+    if (currentUserRole !== 'admin') {
+      alert('You do not have permission to add bookings.');
+      return;
+    }
     editingBookingId = null;
     bookingModalTitle.textContent = `Add New Booking for ${bookingAssetNameSpan.textContent}`;
     bookingStartDatetimeInput.value = '';
@@ -675,7 +703,7 @@ if (bookingForm) {
 }
 
 // ====================
-// 7. Calendar Rendering
+// 8. Calendar Rendering
 // ====================
 
 // Calendar Navigation Buttons
@@ -751,11 +779,12 @@ function renderCalendar() {
       const bookingStart = booking.start_datetime.toDate();
       const bookingEnd = booking.end_datetime.toDate();
       const currentDayDate = new Date(year, month, day);
-      // Normalize dates to remove time component
+      // Normalize dates to include time component
       const normalizedBookingStart = new Date(bookingStart.getFullYear(), bookingStart.getMonth(), bookingStart.getDate(), bookingStart.getHours(), bookingStart.getMinutes());
       const normalizedBookingEnd = new Date(bookingEnd.getFullYear(), bookingEnd.getMonth(), bookingEnd.getDate(), bookingEnd.getHours(), bookingEnd.getMinutes());
-      const normalizedCurrentDay = new Date(currentDayDate.getFullYear(), currentDayDate.getMonth(), currentDayDate.getDate(), 0, 0, 0, 0);
-      return normalizedBookingStart <= normalizedCurrentDay && normalizedBookingEnd >= normalizedCurrentDay;
+      const normalizedCurrentDayStart = new Date(currentDayDate.getFullYear(), currentDayDate.getMonth(), currentDayDate.getDate(), 0, 0, 0, 0);
+      const normalizedCurrentDayEnd = new Date(currentDayDate.getFullYear(), currentDayDate.getMonth(), currentDayDate.getDate(), 23, 59, 59, 999);
+      return normalizedBookingStart <= normalizedCurrentDayEnd && normalizedBookingEnd >= normalizedCurrentDayStart;
     });
 
     if (bookingsForDay.length > 0) {
@@ -803,7 +832,7 @@ function renderCalendar() {
 
 
 // ====================
-// 8. Helper Functions
+// 9. Helper Functions
 // ====================
 
 // Format Date to a readable format, e.g., "2024-04-27 14:30"
@@ -825,4 +854,3 @@ function formatDateTimeLocal(date) {
   const minutes = ('0' + date.getMinutes()).slice(-2);
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
-
