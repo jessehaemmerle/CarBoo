@@ -19,13 +19,27 @@
 </head>
 <body>
   
-  <!-- Navigation Bar -->
-  <nav>
-    <h1>Asset Booking Tool</h1>
-    <div id="user-info">
-      <!-- User info and Logout button will be populated here by app.js -->
+<!-- Navigation Bar -->
+<nav>
+  <h1>Asset Booking Tool</h1>
+  <div id="user-info">
+    <!-- User info and Logout button will be populated here by app.js -->
+  </div>
+  <!-- Settings Tab with Dark Mode Toggle -->
+  <div id="settings-tab">
+    <button id="settings-btn" aria-haspopup="true" aria-expanded="false">
+      ⚙️ Settings
+    </button>
+    <!-- Settings Dropdown -->
+    <div id="settings-dropdown" class="hidden">
+      <label class="switch">
+        <input type="checkbox" id="dark-mode-toggle">
+        <span class="slider"></span>
+      </label>
+      <span>Dark Mode</span>
     </div>
-  </nav>
+  </div>
+</nav>
   
   <!-- Main Content -->
   <main>

@@ -56,6 +56,9 @@ const nextMonthBtn = document.getElementById('next-month-btn');
 const calendarMonthYear = document.getElementById('calendar-month-year');
 const bookingTableBody = document.querySelector('#booking-table tbody');
 
+// Dark Mode Toggle
+const darkModeToggle = document.getElementById('dark-mode-toggle');
+
 // ====================
 // 3. Authentication State Handling
 // ====================
@@ -132,7 +135,42 @@ async function logout() {
 }
 
 // ====================
-// 4. Asset Management Functions
+// 4. Dark Mode Functions
+// ====================
+
+// Function to apply dark mode
+function applyDarkMode(isDark) {
+  if (isDark) {
+    document.body.classList.add('dark-mode');
+    darkModeToggle.checked = true;
+  } else {
+    document.body.classList.remove('dark-mode');
+    darkModeToggle.checked = false;
+  }
+  // Save preference to localStorage
+  localStorage.setItem('darkMode', isDark);
+}
+
+// Event listener for Dark Mode Toggle
+darkModeToggle.addEventListener('change', (e) => {
+  applyDarkMode(e.target.checked);
+});
+
+// Initialize Dark Mode based on saved preference
+function initializeDarkMode() {
+  const darkModePreference = localStorage.getItem('darkMode');
+  if (darkModePreference === 'true') {
+    applyDarkMode(true);
+  } else {
+    applyDarkMode(false);
+  }
+}
+
+// Call initializeDarkMode on script load
+initializeDarkMode();
+
+// ====================
+// 5. Asset Management Functions
 // ====================
 
 // Function to fetch and display assets
@@ -151,11 +189,18 @@ async function displayAssets() {
       return;
     }
 
-    const bookingsSnapshot = await db.collection('bookings')
-      .where('asset_id', 'in', assetIds)
-      .where('company_id', '==', currentUserCompanyId)
-      .get();
-    bookings = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Firestore 'in' queries support up to 10 elements
+    const chunkSize = 10;
+    let bookingsSnapshot = [];
+    for (let i = 0; i < assetIds.length; i += chunkSize) {
+      const chunk = assetIds.slice(i, i + chunkSize);
+      const snapshot = await db.collection('bookings')
+        .where('asset_id', 'in', chunk)
+        .where('company_id', '==', currentUserCompanyId)
+        .get();
+      bookingsSnapshot = bookingsSnapshot.concat(snapshot.docs);
+    }
+    bookings = bookingsSnapshot.map(doc => ({ id: doc.id, ...doc.data() }));
 
     filterAndDisplayAssets();
   } catch (error) {
@@ -379,7 +424,7 @@ assetTableBody.addEventListener('click', async (e) => {
 });
 
 // ====================
-// 5. Booking Management Functions
+// 6. Booking Management Functions
 // ====================
 
 // Function to show Booking Section
@@ -514,6 +559,30 @@ bookingForm.addEventListener('submit', async (e) => {
   }
 
   try {
+    // Conflict Detection: Check for overlapping bookings
+    const overlappingBookingsSnapshot = await db.collection('bookings')
+      .where('asset_id', '==', currentAssetId)
+      .where('company_id', '==', currentUserCompanyId)
+      .get();
+
+    const hasConflict = overlappingBookingsSnapshot.docs.some(doc => {
+      const booking = doc.data();
+      if (editingBookingId && doc.id === editingBookingId) {
+        // Skip the booking being edited
+        return false;
+      }
+      const existingStart = new Date(booking.start_date);
+      const existingEnd = new Date(booking.end_date);
+      const newStart = new Date(start_date);
+      const newEnd = new Date(end_date);
+      return (newStart <= existingEnd && newEnd >= existingStart);
+    });
+
+    if (hasConflict) {
+      alert('The selected dates conflict with an existing booking for this asset.');
+      return;
+    }
+
     if (editingBookingId !== null) {
       // Update existing booking
       await db.collection('bookings').doc(editingBookingId).update({
@@ -547,7 +616,7 @@ bookingForm.addEventListener('submit', async (e) => {
 });
 
 // ====================
-// 6. Calendar Rendering
+// 7. Calendar Rendering
 // ====================
 
 // Calendar Navigation Buttons
@@ -647,7 +716,7 @@ function renderCalendar() {
 }
 
 // ====================
-// 7. Helper Functions
+// 8. Helper Functions
 // ====================
 
 // Format Date to YYYY-MM-DD
@@ -658,3 +727,27 @@ function formatDateToYYYYMMDD(dateStr) {
   const day = ('0' + date.getDate()).slice(-2);
   return `${year}-${month}-${day}`;
 }
+
+// ====================
+// 9. Settings Dropdown Functionality
+// ====================
+
+// Toggle the visibility of the settings dropdown
+settingsBtn.addEventListener('click', () => {
+  const isHidden = settingsDropdown.classList.contains('hidden');
+  if (isHidden) {
+    settingsDropdown.classList.remove('hidden');
+    settingsBtn.setAttribute('aria-expanded', 'true');
+  } else {
+    settingsDropdown.classList.add('hidden');
+    settingsBtn.setAttribute('aria-expanded', 'false');
+  }
+});
+
+// Close the settings dropdown when clicking outside
+window.addEventListener('click', (event) => {
+  if (!settingsBtn.contains(event.target) && !settingsDropdown.contains(event.target)) {
+    settingsDropdown.classList.add('hidden');
+    settingsBtn.setAttribute('aria-expanded', 'false');
+  }
+});

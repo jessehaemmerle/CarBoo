@@ -1,5 +1,48 @@
 /* styles.css */
 
+/* CSS Variables for Light and Dark Modes */
+:root {
+  --background-color: #f4f6f8;
+  --text-color: #333;
+  --nav-background-color: #34495e;
+  --nav-text-color: white;
+  --button-background-color: #2980b9;
+  --button-hover-color: #1f6391;
+  --button-disabled-color: #95a5a6;
+  --button-secondary-background-color: #7f8c8d;
+  --button-secondary-hover-color: #606f7b;
+  --table-header-background-color: #ecf0f1;
+  --table-header-text-color: #7f8c8d;
+  --table-row-background-color: #f9f9f9;
+  --modal-background-color: rgba(52, 73, 94, 0.8);
+  --modal-content-background-color: white;
+  --status-green: #27ae60;
+  --status-yellow: #f1c40f;
+  --status-red: #e74c3c;
+  --status-gray: #7f8c8d;
+}
+
+body.dark-mode {
+  --background-color: #2c3e50;
+  --text-color: #ecf0f1;
+  --nav-background-color: #1abc9c;
+  --nav-text-color: #2c3e50;
+  --button-background-color: #16a085;
+  --button-hover-color: #149174;
+  --button-disabled-color: #95a5a6;
+  --button-secondary-background-color: #95a5a6;
+  --button-secondary-hover-color: #7f8c8d;
+  --table-header-background-color: #34495e;
+  --table-header-text-color: #ecf0f1;
+  --table-row-background-color: #2c3e50;
+  --modal-background-color: rgba(0, 0, 0, 0.8);
+  --modal-content-background-color: #34495e;
+  --status-green: #2ecc71;
+  --status-yellow: #f39c12;
+  --status-red: #e74c3c;
+  --status-gray: #95a5a6;
+}
+
 /* General Styles */
 body {
   font-family: 'Roboto', sans-serif;
