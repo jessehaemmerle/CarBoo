@@ -51,11 +51,20 @@ const bookingEndDatetimeInput = document.getElementById('booking-end-datetime-in
 const bookingModalTitle = document.getElementById('booking-modal-title');
 const assetNameSpan = document.getElementById('asset-name');
 const bookingAssetNameSpan = document.getElementById('booking-asset-name');
-const calendarDiv = document.getElementById('calendar');
-const prevMonthBtn = document.getElementById('prev-month-btn');
-const nextMonthBtn = document.getElementById('next-month-btn');
-const calendarMonthYear = document.getElementById('calendar-month-year');
+const perAssetCalendarDiv = document.getElementById('per-asset-calendar');
+const perAssetPrevMonthBtn = document.getElementById('per-asset-prev-month-btn');
+const perAssetNextMonthBtn = document.getElementById('per-asset-next-month-btn');
+const perAssetCalendarMonthYear = document.getElementById('per-asset-calendar-month-year');
+const perAssetCalendarGrid = document.getElementById('per-asset-calendar-grid');
 const bookingTableBody = document.querySelector('#booking-table tbody');
+
+// All Assets Calendar
+const allAssetsCalendarSection = document.getElementById('booking-calendar-section-all-assets');
+const allAssetsPrevMonthBtn = document.getElementById('all-assets-prev-month-btn');
+const allAssetsNextMonthBtn = document.getElementById('all-assets-next-month-btn');
+const allAssetsCalendarMonthYear = document.getElementById('all-assets-calendar-month-year');
+const allAssetsCalendarGrid = document.getElementById('all-assets-calendar-grid');
+const allAssetsLegendDiv = allAssetsCalendarSection.querySelector('.calendar-legend');
 
 // Dark Mode Toggle
 const darkModeToggle = document.getElementById('dark-mode-toggle');
@@ -73,6 +82,15 @@ let currentAssetId = null;
 let currentDate = new Date();
 let bookings = [];
 let editingBookingId = null;
+
+// Asset Color Mapping
+const assetColors = {}; // Object to map asset IDs to colors
+const colorPalette = [
+  '#FF5733', '#33FF57', '#3357FF', '#FF33A8',
+  '#A833FF', '#33FFF5', '#FF8C33', '#8CFF33',
+  '#338CFF', '#FF3333', '#33FF8C', '#8C33FF'
+];
+let colorIndex = 0;
 
 // ====================
 // 4. Authentication State Handling
@@ -97,7 +115,8 @@ auth.onAuthStateChanged(async (user) => {
       return;
     }
     updateUserInterface();
-    displayAssets();
+    await displayAssets();
+    await renderAllAssetsCalendar(); // Render the main calendar after assets are loaded
   } else {
     // If user is not authenticated, redirect to login page
     window.location.href = 'login.html';
@@ -206,6 +225,14 @@ async function displayAssets() {
       .get();
     allAssets = assetsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+    // Assign colors to assets if not already assigned
+    allAssets.forEach(asset => {
+      if (!assetColors[asset.id]) {
+        assetColors[asset.id] = colorPalette[colorIndex % colorPalette.length];
+        colorIndex++;
+      }
+    });
+
     // Fetch bookings related to these assets
     const assetIds = allAssets.map(asset => asset.id);
     if (assetIds.length === 0) {
@@ -228,6 +255,7 @@ async function displayAssets() {
     bookings = bookingsSnapshot.map(doc => ({ id: doc.id, ...doc.data() }));
 
     filterAndDisplayAssets();
+    await renderAllAssetsCalendar(); // Update main calendar with new bookings
   } catch (error) {
     console.error('Error fetching assets:', error);
     alert('An error occurred while fetching assets.');
@@ -500,7 +528,7 @@ async function showBookingSection(assetId) {
     bookingSection.classList.remove('hidden');
     currentDate = new Date(); // Reset to current date when viewing bookings
     await loadBookings();
-    renderCalendar();
+    renderPerAssetCalendar();
   } else {
     alert('Asset not found.');
   }
@@ -585,7 +613,8 @@ if (bookingTableBody) {
           await db.collection('bookings').doc(bookingId).delete();
           alert('Booking deleted successfully.');
           await loadBookings();
-          renderCalendar();
+          renderPerAssetCalendar();
+          await renderAllAssetsCalendar(); // Refresh main calendar after deletion
           await displayAssets(); // Refresh asset statuses after booking deletion
         } catch (error) {
           console.error('Error deleting booking:', error);
@@ -693,7 +722,8 @@ if (bookingForm) {
       bookingModal.classList.add('hidden');
       bookingForm.reset();
       await loadBookings();
-      renderCalendar();
+      renderPerAssetCalendar();
+      await renderAllAssetsCalendar(); // Refresh main calendar after booking changes
       await displayAssets(); // Refresh asset statuses after booking
     } catch (error) {
       console.error('Error saving booking:', error);
@@ -706,25 +736,16 @@ if (bookingForm) {
 // 8. Calendar Rendering
 // ====================
 
-// Calendar Navigation Buttons
-if (prevMonthBtn && nextMonthBtn) {
-  prevMonthBtn.addEventListener('click', () => {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    renderCalendar();
-  });
+// ====================
+// 8.1 Per-Asset Calendar Rendering
+// ====================
 
-  nextMonthBtn.addEventListener('click', () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar();
-  });
-}
-
-// Render Calendar
-function renderCalendar() {
-  if (!calendarDiv) return;
+// Function to render the per-asset calendar
+function renderPerAssetCalendar() {
+  if (!perAssetCalendarDiv) return;
 
   // Clear existing calendar
-  calendarDiv.innerHTML = '';
+  perAssetCalendarGrid.innerHTML = '';
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -736,8 +757,8 @@ function renderCalendar() {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  if (calendarMonthYear) {
-    calendarMonthYear.textContent = `${monthNames[month]} ${year}`;
+  if (perAssetCalendarMonthYear) {
+    perAssetCalendarMonthYear.textContent = `${monthNames[month]} ${year}`;
   }
 
   // Days of the week headers
@@ -750,7 +771,7 @@ function renderCalendar() {
     dayDiv.textContent = day;
     daysHeader.appendChild(dayDiv);
   });
-  calendarDiv.appendChild(daysHeader);
+  perAssetCalendarGrid.appendChild(daysHeader);
 
   // Dates Grid
   const datesGrid = document.createElement('div');
@@ -788,30 +809,13 @@ function renderCalendar() {
     });
 
     if (bookingsForDay.length > 0) {
-      // Add a booking bar
-      const bookingBar = document.createElement('div');
-      bookingBar.classList.add('booking-bar');
-      bookingBar.title = `${bookingsForDay.length} Booking(s)`;
-      dayCell.appendChild(bookingBar);
-
-      // Add tooltip with booking times
-      const tooltip = document.createElement('div');
-      tooltip.classList.add('booking-tooltip');
+      // Add a booking bar for each booking
       bookingsForDay.forEach((booking) => {
-        const start = formatDateTime(booking.start_datetime.toDate());
-        const end = formatDateTime(booking.end_datetime.toDate());
-        const bookingInfo = document.createElement('div');
-        bookingInfo.textContent = `${start} - ${end}`;
-        tooltip.appendChild(bookingInfo);
-      });
-      dayCell.appendChild(tooltip);
-
-      // Show tooltip on hover
-      dayCell.addEventListener('mouseenter', () => {
-        tooltip.style.display = 'block';
-      });
-      dayCell.addEventListener('mouseleave', () => {
-        tooltip.style.display = 'none';
+        const bookingBar = document.createElement('div');
+        bookingBar.classList.add('booking-bar');
+        bookingBar.style.backgroundColor = assetColors[booking.asset_id] || '#000';
+        bookingBar.title = `${getAssetNameById(booking.asset_id)}: ${formatDateTime(booking.start_datetime.toDate())} - ${formatDateTime(booking.end_datetime.toDate())}`;
+        dayCell.appendChild(bookingBar);
       });
     }
 
@@ -827,9 +831,136 @@ function renderCalendar() {
     datesGrid.appendChild(emptyCell);
   }
 
-  calendarDiv.appendChild(datesGrid);
+  perAssetCalendarGrid.appendChild(datesGrid);
 }
 
+// Event listeners for Per-Asset Calendar Navigation Buttons
+if (perAssetPrevMonthBtn && perAssetNextMonthBtn) {
+  perAssetPrevMonthBtn.addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderPerAssetCalendar();
+  });
+
+  perAssetNextMonthBtn.addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderPerAssetCalendar();
+  });
+}
+
+// ====================
+// 8.2 All Assets Calendar Rendering
+// ====================
+
+// Function to render the all-assets calendar
+async function renderAllAssetsCalendar() {
+  if (!allAssetsCalendarSection) return;
+
+  // Clear existing calendar grid
+  allAssetsCalendarGrid.innerHTML = '';
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  const date = new Date(currentDate);
+  const month = date.getMonth();
+  const year = date.getFullYear();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  if (allAssetsCalendarMonthYear) {
+    allAssetsCalendarMonthYear.textContent = `${monthNames[month]} ${year}`;
+  }
+
+  // Days of the week headers
+  const daysHeader = document.createElement('div');
+  daysHeader.classList.add('calendar-header');
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  dayNames.forEach((day) => {
+    const dayDiv = document.createElement('div');
+    dayDiv.classList.add('calendar-day-header');
+    dayDiv.textContent = day;
+    daysHeader.appendChild(dayDiv);
+  });
+  allAssetsCalendarGrid.appendChild(daysHeader);
+
+  // Dates Grid
+  const datesGrid = document.createElement('div');
+  datesGrid.classList.add('calendar-grid');
+
+  // Empty cells for days before the first day
+  for (let i = 0; i < firstDay; i++) {
+    const emptyCell = document.createElement('div');
+    emptyCell.classList.add('calendar-day', 'empty');
+    datesGrid.appendChild(emptyCell);
+  }
+
+  // Days of the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayCell = document.createElement('div');
+    dayCell.classList.add('calendar-day');
+    const dateString = `${year}-${('0' + (month + 1)).slice(-2)}-${('0' + day).slice(-2)}`;
+    dayCell.dataset.date = dateString;
+
+    const dayNumber = document.createElement('span');
+    dayNumber.classList.add('day-number');
+    dayNumber.textContent = day;
+    dayCell.appendChild(dayNumber);
+
+    // Find bookings for this day
+    const bookingsForDay = bookings.filter((booking) => {
+      const bookingStart = booking.start_datetime.toDate();
+      const bookingEnd = booking.end_datetime.toDate();
+      const currentDayDate = new Date(year, month, day);
+      // Normalize dates to include time component
+      const normalizedBookingStart = new Date(bookingStart.getFullYear(), bookingStart.getMonth(), bookingStart.getDate(), bookingStart.getHours(), bookingStart.getMinutes());
+      const normalizedBookingEnd = new Date(bookingEnd.getFullYear(), bookingEnd.getMonth(), bookingEnd.getDate(), bookingEnd.getHours(), bookingEnd.getMinutes());
+      const normalizedCurrentDayStart = new Date(currentDayDate.getFullYear(), currentDayDate.getMonth(), currentDayDate.getDate(), 0, 0, 0, 0);
+      const normalizedCurrentDayEnd = new Date(currentDayDate.getFullYear(), currentDayDate.getMonth(), currentDayDate.getDate(), 23, 59, 59, 999);
+      return normalizedBookingStart <= normalizedCurrentDayEnd && normalizedBookingEnd >= normalizedCurrentDayStart;
+    });
+
+    if (bookingsForDay.length > 0) {
+      // Add a booking bar for each booking
+      bookingsForDay.forEach((booking) => {
+        const bookingBar = document.createElement('div');
+        bookingBar.classList.add('booking-bar');
+        bookingBar.style.backgroundColor = assetColors[booking.asset_id] || '#000';
+        bookingBar.title = `${getAssetNameById(booking.asset_id)}: ${formatDateTime(booking.start_datetime.toDate())} - ${formatDateTime(booking.end_datetime.toDate())}`;
+        dayCell.appendChild(bookingBar);
+      });
+    }
+
+    datesGrid.appendChild(dayCell);
+  }
+
+  // Empty cells after the last day
+  const totalCells = firstDay + daysInMonth;
+  const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 0; i < remainingCells; i++) {
+    const emptyCell = document.createElement('div');
+    emptyCell.classList.add('calendar-day', 'empty');
+    datesGrid.appendChild(emptyCell);
+  }
+
+  allAssetsCalendarGrid.appendChild(datesGrid);
+
+  // Render Legend
+  renderCalendarLegend();
+}
+
+// Event listeners for All Assets Calendar Navigation Buttons
+if (allAssetsPrevMonthBtn && allAssetsNextMonthBtn) {
+  allAssetsPrevMonthBtn.addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderAllAssetsCalendar();
+  });
+
+  allAssetsNextMonthBtn.addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderAllAssetsCalendar();
+  });
+}
 
 // ====================
 // 9. Helper Functions
@@ -854,3 +985,100 @@ function formatDateTimeLocal(date) {
   const minutes = ('0' + date.getMinutes()).slice(-2);
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
+
+// Helper function to get asset name by ID
+function getAssetNameById(assetId) {
+  const asset = allAssets.find(a => a.id === assetId);
+  return asset ? asset.name : 'Unknown Asset';
+}
+
+// ====================
+// 10. Calendar Legend Rendering
+// ====================
+
+// Function to render the calendar legend
+function renderCalendarLegend() {
+  // Clear existing legend
+  allAssetsLegendDiv.innerHTML = '<h3>Legend:</h3>';
+
+  // Create legend items
+  allAssets.forEach((asset) => {
+    const legendItem = document.createElement('div');
+    legendItem.classList.add('legend-item');
+
+    const colorBox = document.createElement('span');
+    colorBox.classList.add('legend-color-box');
+    colorBox.style.backgroundColor = assetColors[asset.id] || '#000';
+
+    const assetName = document.createElement('span');
+    assetName.classList.add('legend-asset-name');
+    assetName.textContent = asset.name;
+
+    legendItem.appendChild(colorBox);
+    legendItem.appendChild(assetName);
+    allAssetsLegendDiv.appendChild(legendItem);
+  });
+}
+
+// ====================
+// 11. Additional Enhancements
+// ====================
+
+// Optional: Listen for real-time updates to assets and bookings
+// This ensures the calendar updates automatically when data changes
+
+// Listen for real-time updates to assets
+db.collection('assets')
+  .where('company_id', '==', currentUserCompanyId)
+  .onSnapshot(async (snapshot) => {
+    allAssets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Assign colors to new assets
+    allAssets.forEach(asset => {
+      if (!assetColors[asset.id]) {
+        assetColors[asset.id] = colorPalette[colorIndex % colorPalette.length];
+        colorIndex++;
+      }
+    });
+
+    // Fetch updated bookings
+    const assetIds = allAssets.map(asset => asset.id);
+    if (assetIds.length === 0) {
+      bookings = [];
+      assetTableBody.innerHTML = '<tr><td colspan="4">No assets available.</td></tr>';
+      renderAllAssetsCalendar();
+      filterAndDisplayAssets();
+      return;
+    }
+
+    // Firestore 'in' queries support up to 10 elements
+    const chunkSize = 10;
+    let bookingsSnapshot = [];
+    for (let i = 0; i < assetIds.length; i += chunkSize) {
+      const chunk = assetIds.slice(i, i + chunkSize);
+      const snapshot = await db.collection('bookings')
+        .where('asset_id', 'in', chunk)
+        .where('company_id', '==', currentUserCompanyId)
+        .get();
+      bookingsSnapshot = bookingsSnapshot.concat(snapshot.docs);
+    }
+    bookings = bookingsSnapshot.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Update calendars and asset list
+    renderAllAssetsCalendar();
+    filterAndDisplayAssets();
+  });
+
+// Listen for real-time updates to bookings
+db.collection('bookings')
+  .where('company_id', '==', currentUserCompanyId)
+  .onSnapshot((snapshot) => {
+    bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Update calendars
+    renderAllAssetsCalendar();
+    if (!bookingSection.classList.contains('hidden') && currentAssetId) {
+      renderPerAssetCalendar();
+    }
+    filterAndDisplayAssets();
+  });

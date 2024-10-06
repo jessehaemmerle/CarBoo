@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!--Meta tags for website-->
+  <!-- Meta tags for website -->
   <meta charset="UTF-8">
   <meta name="description" content="CarBoo - Book your ride, simplified">
   <meta name="author" content="Jesse Hämmerle">
@@ -12,7 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CarBoo - Book your ride, simplified!</title>
 
-  <!--Favicon for the page-->
+  <!-- Favicon for the page -->
   <link rel="icon" type="image/x-icon" href="icon.png">
   <!-- Link to Stylesheet -->
   <link rel="stylesheet" href="styles.css">
@@ -28,137 +28,156 @@
 </head>
 <body>
   
-<!-- Navigation Bar -->
-<nav>
-  <h1>
-    <a href="index.html" id="home-link" aria-label="Home">Asset Booking Tool</a>
-  </h1>
-  <div id="user-info">
-    <!-- User info and Logout button will be populated here by app.js -->
-  </div>
-  <!-- Settings Tab with Dark Mode Toggle -->
-  <div id="settings-tab">
-    <a href="settings.html" id="settings-link" aria-label="Settings">
-      ⚙️ Settings
-    </a>
-  </div>
-</nav>
-  
-  <!-- Main Content -->
-  <main>
+  <!-- Navigation Bar -->
+  <nav>
+    <h1>
+      <a href="index.html" id="home-link" aria-label="Home">Asset Booking Tool</a>
+    </h1>
+    <div id="user-info">
+      <!-- User info and Logout button will be populated here by app.js -->
+    </div>
+    <!-- Settings Tab with Dark Mode Toggle -->
+    <div id="settings-tab">
+      <a href="settings.html" id="settings-link" aria-label="Settings">
+        ⚙️ Settings
+      </a>
+    </div>
+  </nav>
     
-    <!-- Asset Management Section -->
-<section id="asset-list-section" class="hidden">
-  <h2>Asset Management</h2>
-  
-  <!-- Add Asset Button (Visible to Admins) -->
-  <button id="add-asset-btn" class="hidden">Add New Asset</button>
+    <!-- Main Content -->
+    <main>
+      
+      <!-- Asset Management Section -->
+  <section id="asset-list-section" class="hidden">
+    <h2>Asset Management</h2>
+    
+    <!-- Add Asset Button (Visible to Admins) -->
+    <button id="add-asset-btn" class="hidden">Add New Asset</button>
 
-  <!-- Asset Controls: Search and Filters -->
-  <div class="asset-controls">
-    <!-- Search Input -->
-    <input type="text" id="asset-search-input" placeholder="Search assets...">
+    <!-- Asset Controls: Search and Filters -->
+    <div class="asset-controls">
+      <!-- Search Input -->
+      <input type="text" id="asset-search-input" placeholder="Search assets...">
+      
+      <!-- Status Filter Dropdown -->
+      <select id="asset-status-filter">
+        <option value="all">All Statuses</option>
+        <option value="green">Available</option>
+        <option value="yellow">Booked Soon</option>
+        <option value="red">Currently Booked</option>
+      </select>
+      
+      
+    </div>
     
-    <!-- Status Filter Dropdown -->
-    <select id="asset-status-filter">
-      <option value="all">All Statuses</option>
-      <option value="green">Available</option>
-      <option value="yellow">Booked Soon</option>
-      <option value="red">Currently Booked</option>
-    </select>
-    
-    
+    <!-- Assets Table -->
+    <table id="asset-table">
+      <thead>
+        <tr>
+          <th>Asset Name</th>
+          <th>Number Plate</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Asset rows will be dynamically populated here -->
+      </tbody>
+    </table>
+  </section>
+  
+ <!-- All Bookings Calendar Section -->
+<section id="booking-calendar-section-all-assets">
+  <h2>All Bookings Calendar</h2>
+  <!-- Calendar Header -->
+  <div id="all-assets-calendar-header">
+    <button id="all-assets-prev-month-btn">&lt;</button>
+    <span id="all-assets-calendar-month-year"></span>
+    <button id="all-assets-next-month-btn">&gt;</button>
+  </div>
+  <!-- Calendar Grid -->
+  <div id="all-assets-calendar-grid">
+    <!-- Calendar days will be rendered here by app.js -->
+  </div>
+  <!-- Legend -->
+  <div class="calendar-legend">
+    <!-- Legend items will be rendered here by app.js -->
+  </div>
+</section>   
+      
+      <!-- Asset Modal (Add/Edit) -->
+      <div id="asset-modal" class="modal hidden">
+        <div class="modal-content">
+          <span class="close-btn" id="close-asset-modal">&times;</span>
+          <h2 id="asset-modal-title">Add New Asset</h2>
+          <form id="asset-form">
+            <label for="asset-name-input">Asset Name:</label>
+            <input type="text" id="asset-name-input" required>
+            
+            <label for="asset-number-plate-input">Number Plate:</label>
+            <input type="text" id="asset-number-plate-input" required>
+            
+            <button type="submit" id="save-asset-btn">Save</button>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Booking Section -->
+<section id="booking-section" class="hidden">
+  <h2>Bookings for <span id="asset-name"></span></h2>
+  <button id="back-to-assets-btn">Back to Assets</button>
+  <button id="add-booking-btn">Add New Booking</button>
+  
+  <!-- Calendar -->
+  <div id="per-asset-calendar">
+    <div id="per-asset-calendar-header">
+      <button id="per-asset-prev-month-btn">&lt;</button>
+      <span id="per-asset-calendar-month-year"></span>
+      <button id="per-asset-next-month-btn">&gt;</button>
+    </div>
+    <div id="per-asset-calendar-grid">
+      <!-- Calendar days will be rendered here by app.js -->
+    </div>
   </div>
   
-  <!-- Assets Table -->
-  <table id="asset-table">
+  <!-- Bookings Table -->
+  <table id="booking-table">
     <thead>
       <tr>
-        <th>Asset Name</th>
-        <th>Number Plate</th>
-        <th>Status</th>
+        <th>Start Date</th>
+        <th>End Date</th>
         <th>Actions</th>
       </tr>
     </thead>
     <tbody>
-      <!-- Asset rows will be dynamically populated here -->
+      <!-- Booking rows will be populated here by app.js -->
     </tbody>
   </table>
 </section>
 
-    
-    <!-- Asset Modal (Add/Edit) -->
-    <div id="asset-modal" class="modal hidden">
-      <div class="modal-content">
-        <span class="close-btn" id="close-asset-modal">&times;</span>
-        <h2 id="asset-modal-title">Add New Asset</h2>
-        <form id="asset-form">
-          <label for="asset-name-input">Asset Name:</label>
-          <input type="text" id="asset-name-input" required>
-          
-          <label for="asset-number-plate-input">Number Plate:</label>
-          <input type="text" id="asset-number-plate-input" required>
-          
-          <button type="submit" id="save-asset-btn">Save</button>
-        </form>
-      </div>
-    </div>
-    
-    <!-- Booking Section -->
-    <section id="booking-section" class="hidden">
-      <h2>Bookings for <span id="asset-name"></span></h2>
-      <button id="back-to-assets-btn">Back to Assets</button>
-      <button id="add-booking-btn">Add New Booking</button>
       
-      <!-- Calendar -->
-      <div id="calendar">
-        <div id="calendar-header">
-          <button id="prev-month-btn">&lt;</button>
-          <span id="calendar-month-year"></span>
-          <button id="next-month-btn">&gt;</button>
-        </div>
-        <div id="calendar-grid">
-          <!-- Calendar days will be rendered here by app.js -->
+      <!-- Booking Modal (Add/Edit) -->
+      <div id="booking-modal" class="modal hidden">
+        <div class="modal-content">
+          <span class="close-btn" id="close-booking-modal">&times;</span>
+          <h2 id="booking-modal-title">Add New Booking for <span id="booking-asset-name"></span></h2>
+          <form id="booking-form">
+            <label for="booking-start-datetime-input">Start Date & Time:</label>
+            <input type="datetime-local" id="booking-start-datetime-input" required>
+            
+            <label for="booking-end-datetime-input">End Date & Time:</label>
+            <input type="datetime-local" id="booking-end-datetime-input" required>
+            
+            <button type="submit" id="save-booking-btn">Save</button>
+          </form>
         </div>
       </div>
       
-      <!-- Bookings Table -->
-      <table id="booking-table">
-        <thead>
-          <tr>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Booking rows will be populated here by app.js -->
-        </tbody>
-      </table>
-    </section>
+    </main>
     
-    <!-- Booking Modal (Add/Edit) -->
-    <div id="booking-modal" class="modal hidden">
-      <div class="modal-content">
-        <span class="close-btn" id="close-booking-modal">&times;</span>
-        <h2 id="booking-modal-title">Add New Booking for <span id="booking-asset-name"></span></h2>
-        <form id="booking-form">
-          <label for="booking-start-datetime-input">Start Date & Time:</label>
-          <input type="datetime-local" id="booking-start-datetime-input" required>
-          
-          <label for="booking-end-datetime-input">End Date & Time:</label>
-          <input type="datetime-local" id="booking-end-datetime-input" required>
-          
-          <button type="submit" id="save-booking-btn">Save</button>
-        </form>
-      </div>
-    </div>
+    <!-- Link to Script File -->
+    <script src="app.js"></script>
+    <script src="theme.js"></script>
     
-  </main>
-  
-  <!-- Link to Script File -->
-  <script src="app.js"></script>
-  <script src="theme.js"></script>
-  
-</body>
+  </body>
 </html>

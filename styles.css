@@ -25,6 +25,9 @@
   --status-gray: #7f8c8d;
   --booking-bar-color: #e74c3c;
   --border-color: #bdc3c7;
+  --legend-bg-color: #ffffff;
+  --tooltip-bg-color: rgba(0, 0, 0, 0.8);
+  --tooltip-text-color: #ffffff;
 }
 
 /* Dark Theme Variables */
@@ -48,6 +51,9 @@
   --status-gray: #95a5a6;
   --booking-bar-color: #c0392b;
   --border-color: #7f8c8d;
+  --legend-bg-color: #34495e;
+  --tooltip-bg-color: rgba(0, 0, 0, 0.8);
+  --tooltip-text-color: #ecf0f1;
 }
 
 /* ============================
@@ -66,6 +72,10 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+.hidden {
+  display: none;
 }
 
 /* ============================
@@ -141,10 +151,22 @@ h2 {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .asset-controls input {
   width: 250px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 16px;
+  background-color: var(--table-row-bg);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.asset-controls select {
+  width: 200px;
   padding: 8px 12px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
@@ -188,6 +210,11 @@ button.secondary {
 
 button.secondary:hover {
   background-color: var(--button-secondary-hover-bg);
+}
+
+button.small {
+  padding: 5px 10px;
+  font-size: 12px;
 }
 
 /* ============================
@@ -283,11 +310,6 @@ tr:nth-child(even) {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-50px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 .close-btn {
   position: absolute;
   top: 15px;
@@ -338,45 +360,15 @@ form button:hover {
   background-color: var(--button-hover-bg);
 }
 
-/* Booking Form Styles */
-#booking-form {
-  display: flex;
-  flex-direction: column;
-}
-
-#booking-form label {
-  margin: 15px 0 5px 0;
-  font-weight: 500;
-}
-
-#booking-form input[type="datetime-local"] {
-  padding: 10px 12px;
-  font-size: 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  background-color: var(--table-row-bg);
-  color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-#booking-form button {
-  margin-top: 25px;
-  padding: 12px;
-  background-color: var(--button-bg-color);
-  color: white;
-  font-size: 16px;
-}
-
-#booking-form button:hover {
-  background-color: var(--button-hover-bg);
-}
-
-
 /* ============================
    12. Calendar
    ============================ */
 
-#calendar {
+/* ============================
+   12.1 General Calendar Styles
+   ============================ */
+
+#calendar, #per-asset-calendar, #booking-calendar-section-all-assets {
   margin: 30px 0;
   background-color: var(--table-row-bg);
   border-radius: 8px;
@@ -385,7 +377,7 @@ form button:hover {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-#calendar-header {
+.calendar-header {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -393,27 +385,38 @@ form button:hover {
   padding: 15px;
 }
 
-#calendar-header button {
+.calendar-header button {
   background-color: var(--button-bg-color);
   margin: 0 20px;
 }
 
-#calendar-header button:hover {
+.calendar-header button:hover {
   background-color: var(--button-hover-bg);
 }
 
-#calendar-month-year {
+.calendar-header span {
+  flex-grow: 1;
+  text-align: center;
   font-size: 1.2em;
   font-weight: 500;
   color: var(--text-color);
 }
 
-.calendar-header, .calendar-grid {
+.calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
 }
 
-.calendar-day-header, .calendar-day {
+.calendar-day-header {
+  background-color: var(--table-header-bg);
+  padding: 10px 0;
+  text-align: center;
+  font-weight: 500;
+  color: white;
+}
+
+.calendar-day {
   border: 1px solid var(--border-color);
   padding: 10px;
   text-align: center;
@@ -421,12 +424,6 @@ form button:hover {
   background-color: var(--table-row-bg);
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.calendar-day-header {
-  background-color: var(--table-header-bg);
-  color: white;
-  font-weight: 500;
 }
 
 .calendar-day.empty {
@@ -438,19 +435,52 @@ form button:hover {
   color: var(--text-color);
 }
 
-/* Booking Bars */
 .booking-bar {
   position: absolute;
   bottom: 5px;
   left: 5px;
   right: 5px;
   height: 8px;
-  background-color: var(--booking-bar-color);
   border-radius: 4px;
+  cursor: pointer;
 }
 
 /* ============================
-   13. Bookings Table
+   13. Calendar Legends
+   ============================ */
+
+.calendar-legend {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  background-color: var(--legend-bg-color);
+  padding: 10px 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-right: 15px;
+  margin-bottom: 10px;
+}
+
+.legend-color-box {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-right: 5px;
+  border: 1px solid #000;
+  border-radius: 3px;
+}
+
+.legend-asset-name {
+  font-size: 0.9em;
+  color: var(--text-color);
+}
+
+/* ============================
+   14. Bookings Table
    ============================ */
 
 #booking-table {
@@ -485,30 +515,27 @@ form button:hover {
 }
 
 /* ============================
-   14. Responsive Design
+   15. Responsive Design
    ============================ */
 
-@media (max-width: 768px) {
-  .modal-content {
-    width: 90%;
-    padding: 20px;
-  }
-
+@media (max-width: 1024px) {
   .asset-controls {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .asset-controls button, .asset-controls input {
+  .asset-controls input,
+  .asset-controls select,
+  .asset-controls button {
     width: 100%;
     margin-bottom: 10px;
   }
 
-  #calendar-header {
+  .calendar-header {
     flex-direction: column;
   }
 
-  #calendar-header button {
+  .calendar-header button {
     margin: 10px 0;
   }
 
@@ -527,118 +554,108 @@ form button:hover {
   }
 }
 
+@media (max-width: 768px) {
+  .modal-content {
+    width: 90%;
+    padding: 20px;
+  }
+
+  .calendar-header button {
+    margin: 10px 0;
+  }
+
+  .booking-tooltip {
+    width: 150px;
+  }
+
+  .calendar-legend {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .legend-item {
+    margin-right: 0;
+  }
+}
+
 /* ============================
-   15. Additional Styles
+   16. Tooltip Styles
    ============================ */
 
-/* Toggle Switch Styles */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 24px;
-  margin-right: 10px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--border-color);
-  transition: 0.4s;
-  border-radius: 24px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: var(--bg-color);
-  transition: 0.4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: var(--button-bg-color);
-}
-
-input:checked + .slider:before {
-  transform: translateX(26px);
-}
-
-/* Dark Mode Transition */
-body, .modal-content, .calendar-day, .calendar-day-header, .asset-controls input, form input, form select {
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Generic Hidden Class */
-.hidden {
-  display: none;
-}
-
-/* Asset Controls: Status Filter Dropdown */
-#asset-status-filter {
-  width: 200px;
-  padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 16px;
-  background-color: var(--table-row-bg);
-  color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Responsive Adjustments for Asset Controls */
-@media (max-width: 768px) {
-  .asset-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .asset-controls select,
-  .asset-controls input,
-  .asset-controls button {
-    width: 100%;
-    margin-bottom: 10px;
-  }
-}
-
-/* Tooltip Styles */
+/* Tooltip container */
 .booking-tooltip {
   display: none;
   position: absolute;
-  top: 100%;
+  top: -70px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: var(--modal-bg-color);
-  color: var(--text-color);
-  padding: 10px;
-  border: 1px solid var(--border-color);
+  background-color: var(--tooltip-bg-color);
+  color: var(--tooltip-text-color);
+  padding: 8px 12px;
   border-radius: 4px;
   white-space: nowrap;
   z-index: 1001;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
+/* Tooltip arrow */
+.booking-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--tooltip-bg-color) transparent transparent transparent;
+}
+
+/* Show tooltip on hover */
+.calendar-day:hover .booking-tooltip {
+  display: block;
+}
+
+/* ============================
+   17. Booking Tooltip Enhancements
+   ============================ */
+
 .calendar-day {
   position: relative;
 }
 
-/* Optional: Adjust booking bar height to accommodate tooltip */
-.booking-bar {
-  height: 8px;
-  /* existing styles */
+.calendar-day:hover {
+  background-color: #e0e0e0;
 }
 
+.booking-bar:hover {
+  opacity: 0.8;
+}
+
+/* ============================
+   18. Accessibility Enhancements
+   ============================ */
+
+/* Focus states for interactive elements */
+button:focus,
+a:focus,
+input:focus,
+select:focus {
+  outline: 2px solid var(--button-hover-bg);
+  outline-offset: 2px;
+}
+
+/* Ensure sufficient color contrast for text and backgrounds */
+.status-icon.green,
+.status-icon.yellow,
+.status-icon.red,
+.status-icon.gray {
+  border: 1px solid var(--border-color);
+}
+
+.legend-color-box {
+  border: 1px solid var(--border-color);
+}
+
+.legend-asset-name {
+  color: var(--text-color);
+}
