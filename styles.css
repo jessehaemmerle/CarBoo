@@ -1,72 +1,112 @@
-/* styles.css */
-
 /* ============================
    1. CSS Variables for Theming
    ============================ */
 
-/* Light Theme Variables */
+/* Light and Dark Theme Variables */
 :root {
-  --bg-color: #f4f6f8;
-  --text-color: #333333;
-  --nav-bg-color: #34495e;
-  --nav-text-color: #ffffff;
-  --table-header-bg: #ecf0f1;
-  --table-row-bg: #ffffff;
-  --table-row-alt-bg: #f9f9f9;
-  --button-bg-color: #2980b9;
-  --button-hover-bg: #1f6391;
-  --button-secondary-bg: #7f8c8d;
-  --button-secondary-hover-bg: #606f7b;
-  --modal-bg-color: #ffffff;
-  --modal-overlay-bg: rgba(52, 73, 94, 0.8);
-  --status-green: #27ae60;
-  --status-yellow: #f1c40f;
-  --status-red: #e74c3c;
-  --status-gray: #7f8c8d;
-  --booking-bar-color: #e74c3c;
-  --border-color: #bdc3c7;
-  --legend-bg-color: #ffffff;
-  --tooltip-bg-color: rgba(0, 0, 0, 0.8);
-  --tooltip-text-color: #ffffff;
+  /* Colors */
+  --color-bg: #f4f6f8;
+  --color-text: #333333;
+  --color-nav-bg: #34495e;
+  --color-nav-text: #ffffff;
+  --color-table-header-bg: #ecf0f1;
+  --color-table-row-bg: #ffffff;
+  --color-table-row-alt-bg: #f9f9f9;
+  --color-button-primary: #2980b9;
+  --color-button-primary-hover: #1f6391;
+  --color-button-secondary: #7f8c8d;
+  --color-button-secondary-hover: #606f7b;
+  --color-modal-bg: #ffffff;
+  --color-modal-overlay: rgba(52, 73, 94, 0.8);
+  --color-status-green: #27ae60;
+  --color-status-yellow: #f1c40f;
+  --color-status-red: #e74c3c;
+  --color-status-gray: #7f8c8d;
+  --color-booking-bar: #e74c3c;
+  --color-border: #bdc3c7;
+  --color-legend-bg: #ffffff;
+  --color-tooltip-bg: rgba(0, 0, 0, 0.8);
+  --color-tooltip-text: #ffffff;
+
+  /* Typography */
+  --font-family: 'Roboto', sans-serif;
+  --font-size-base: 16px;
+  --font-size-lg: 1.5em;
+  --font-size-md: 1.2em;
+  --font-size-sm: 0.9em;
+  --font-weight-normal: 500;
+  --font-weight-bold: 700;
+
+  /* Spacing */
+  --spacing-xs: 5px;
+  --spacing-sm: 10px;
+  --spacing-md: 15px;
+  --spacing-lg: 20px;
+  --spacing-xl: 30px;
+  --spacing-xxl: 40px;
+
+  /* Transitions */
+  --transition-default: background-color 0.3s ease, color 0.3s ease;
+  --transition-fast: opacity 0.3s ease;
+  --transition-slow: box-shadow 0.3s ease;
+
+  /* Border Radius */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 15px;
+
+  /* Z-Index */
+  --z-index-modal: 1000;
+  --z-index-tooltip: 1001;
+
+  /* Misc */
+  --box-shadow-default: 0 2px 5px rgba(0, 0, 0, 0.1);
+  --box-shadow-lg: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-/* Dark Theme Variables */
+/* Dark Theme Overrides */
 .dark-mode {
-  --bg-color: #2c3e50;
-  --text-color: #ecf0f1;
-  --nav-bg-color: #1a252f;
-  --nav-text-color: #ecf0f1;
-  --table-header-bg: #34495e;
-  --table-row-bg: #3b4a59;
-  --table-row-alt-bg: #2c3e50;
-  --button-bg-color: #16a085;
-  --button-hover-bg: #149174;
-  --button-secondary-bg: #95a5a6;
-  --button-secondary-hover-bg: #7f8c8d;
-  --modal-bg-color: #34495e;
-  --modal-overlay-bg: rgba(0, 0, 0, 0.8);
-  --status-green: #2ecc71;
-  --status-yellow: #f39c12;
-  --status-red: #c0392b;
-  --status-gray: #95a5a6;
-  --booking-bar-color: #c0392b;
-  --border-color: #7f8c8d;
-  --legend-bg-color: #34495e;
-  --tooltip-bg-color: rgba(0, 0, 0, 0.8);
-  --tooltip-text-color: #ecf0f1;
+  --color-bg: #2c3e50;
+  --color-text: #ecf0f1;
+  --color-nav-bg: #1a252f;
+  --color-nav-text: #ecf0f1;
+  --color-table-header-bg: #34495e;
+  --color-table-row-bg: #3b4a59;
+  --color-table-row-alt-bg: #2c3e50;
+  --color-button-primary: #16a085;
+  --color-button-primary-hover: #149174;
+  --color-button-secondary: #95a5a6;
+  --color-button-secondary-hover: #7f8c8d;
+  --color-modal-bg: #34495e;
+  --color-modal-overlay: rgba(0, 0, 0, 0.8);
+  --color-status-green: #2ecc71;
+  --color-status-yellow: #f39c12;
+  --color-status-red: #c0392b;
+  --color-status-gray: #95a5a6;
+  --color-booking-bar: #c0392b;
+  --color-border: #7f8c8d;
+  --color-legend-bg: #34495e;
+  --color-tooltip-bg: rgba(0, 0, 0, 0.8);
+  --color-tooltip-text: #ecf0f1;
 }
 
 /* ============================
    2. General Styles
    ============================ */
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-family);
   margin: 0;
   padding: 0;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: var(--transition-default);
 }
 
 a {
@@ -78,46 +118,50 @@ a {
   display: none;
 }
 
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: var(--font-size-base);
+}
+
 /* ============================
    3. Navigation Bar
    ============================ */
 
 nav {
-  background-color: var(--nav-bg-color);
-  color: var(--nav-text-color);
-  padding: 15px 30px;
+  background-color: var(--color-nav-bg);
+  color: var(--color-nav-text);
+  padding: var(--spacing-md) var(--spacing-xxl);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 nav h1 {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   margin: 0;
-  font-size: 1.5em;
+  font-size: var(--font-size-lg);
 }
 
-nav #user-info {
+nav .user-info,
+nav .settings-tab {
   display: flex;
   align-items: center;
 }
 
-nav #user-info span {
-  margin-right: 15px;
+nav .user-info span {
+  margin-right: var(--spacing-sm);
 }
 
-nav #settings-tab {
-  display: flex;
-  align-items: center;
-}
-
-nav #settings-link {
+nav .settings-link {
   font-size: 1em;
   cursor: pointer;
-  transition: opacity 0.3s ease;
+  transition: var(--transition-fast);
 }
 
-nav #settings-link:hover {
+nav .settings-link:hover {
   opacity: 0.8;
 }
 
@@ -126,20 +170,25 @@ nav #settings-link:hover {
    ============================ */
 
 main {
-  padding: 20px 30px;
+  padding: var(--spacing-xl) var(--spacing-xxl);
 }
 
 /* ============================
    5. Headings
    ============================ */
 
-h1, h2 {
-  margin: 0 0 20px 0;
-  font-weight: 500;
+h1,
+h2 {
+  margin-bottom: var(--spacing-md);
+  font-weight: var(--font-weight-normal);
+}
+
+h1 {
+  font-size: 2em;
 }
 
 h2 {
-  font-size: 1.5em;
+  font-size: var(--font-size-lg);
 }
 
 /* ============================
@@ -150,30 +199,26 @@ h2 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-xl);
   flex-wrap: wrap;
+  gap: var(--spacing-sm);
 }
 
-.asset-controls input {
-  width: 250px;
+.asset-controls input,
+.asset-controls select {
   padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 16px;
-  background-color: var(--table-row-bg);
-  color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-base);
+  background-color: var(--color-table-row-bg);
+  color: var(--color-text);
+  transition: var(--transition-default);
+  width: 100%;
+  max-width: 250px;
 }
 
 .asset-controls select {
-  width: 200px;
-  padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 16px;
-  background-color: var(--table-row-bg);
-  color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  max-width: 200px;
 }
 
 /* ============================
@@ -184,15 +229,15 @@ button {
   padding: 8px 16px;
   cursor: pointer;
   border: none;
-  border-radius: 4px;
-  background-color: var(--button-bg-color);
-  color: white;
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-button-primary);
+  color: #ffffff;
   font-size: 14px;
-  transition: background-color 0.3s ease;
+  transition: var(--transition-default);
 }
 
 button:hover {
-  background-color: var(--button-hover-bg);
+  background-color: var(--color-button-primary-hover);
 }
 
 button:disabled {
@@ -205,11 +250,11 @@ button.hidden {
 }
 
 button.secondary {
-  background-color: var(--button-secondary-bg);
+  background-color: var(--color-button-secondary);
 }
 
 button.secondary:hover {
-  background-color: var(--button-secondary-hover-bg);
+  background-color: var(--color-button-secondary-hover);
 }
 
 button.small {
@@ -224,32 +269,29 @@ button.small {
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 30px;
-  background-color: var(--table-row-bg);
-  border-radius: 8px;
+  margin-bottom: var(--spacing-xxl);
+  background-color: var(--color-table-row-bg);
+  border-radius: var(--border-radius-md);
   overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: var(--box-shadow-default);
 }
 
-table, th, td {
-  border: none;
-}
-
-th, td {
+th,
+td {
   padding: 15px 20px;
   text-align: left;
 }
 
 th {
-  background-color: var(--table-header-bg);
-  font-weight: 500;
+  background-color: var(--color-table-header-bg);
+  font-weight: var(--font-weight-normal);
   text-transform: uppercase;
   font-size: 12px;
   color: #7f8c8d;
 }
 
 tr:nth-child(even) {
-  background-color: var(--table-row-alt-bg);
+  background-color: var(--color-table-row-alt-bg);
 }
 
 /* ============================
@@ -261,22 +303,23 @@ tr:nth-child(even) {
   width: 15px;
   height: 15px;
   border-radius: 50%;
+  border: 1px solid var(--color-border);
 }
 
 .status-icon.green {
-  background-color: var(--status-green);
+  background-color: var(--color-status-green);
 }
 
 .status-icon.yellow {
-  background-color: var(--status-yellow);
+  background-color: var(--color-status-yellow);
 }
 
 .status-icon.red {
-  background-color: var(--status-red);
+  background-color: var(--color-status-red);
 }
 
 .status-icon.gray {
-  background-color: var(--status-gray);
+  background-color: var(--color-status-gray);
 }
 
 /* ============================
@@ -289,11 +332,12 @@ tr:nth-child(even) {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: var(--modal-overlay-bg);
+  background-color: var(--color-modal-overlay);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: var(--z-index-modal);
+  transition: opacity 0.3s ease;
 }
 
 .modal.hidden {
@@ -301,19 +345,19 @@ tr:nth-child(even) {
 }
 
 .modal-content {
-  background-color: var(--modal-bg-color);
-  padding: 30px 40px;
+  background-color: var(--color-modal-bg);
+  padding: var(--spacing-xxl) var(--spacing-xl);
   width: 450px;
-  border-radius: 8px;
+  border-radius: var(--border-radius-md);
   position: relative;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  box-shadow: var(--box-shadow-lg);
+  transition: var(--transition-default);
 }
 
 .close-btn {
   position: absolute;
-  top: 15px;
-  right: 20px;
+  top: var(--spacing-sm);
+  right: var(--spacing-md);
   font-size: 24px;
   color: #7f8c8d;
   cursor: pointer;
@@ -334,105 +378,127 @@ form {
 }
 
 form label {
-  margin: 15px 0 5px 0;
-  font-weight: 500;
+  margin: var(--spacing-md) 0 var(--spacing-xs) 0;
+  font-weight: var(--font-weight-normal);
 }
 
-form input, form select {
+form input,
+form select,
+#booking-form input[type="datetime-local"] {
   padding: 10px 12px;
-  font-size: 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  background-color: var(--table-row-bg);
-  color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  font-size: var(--font-size-base);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-table-row-bg);
+  color: var(--color-text);
+  transition: var(--transition-default);
 }
 
-form button {
-  margin-top: 25px;
+form button,
+#booking-form button {
+  margin-top: var(--spacing-xl);
   padding: 12px;
-  background-color: var(--button-bg-color);
-  color: white;
-  font-size: 16px;
+  background-color: var(--color-button-primary);
+  color: #ffffff;
+  font-size: var(--font-size-base);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: var(--transition-default);
 }
 
-form button:hover {
-  background-color: var(--button-hover-bg);
+form button:hover,
+#booking-form button:hover {
+  background-color: var(--color-button-primary-hover);
 }
 
 /* ============================
    12. Calendar
    ============================ */
 
-/* ============================
-   12.1 General Calendar Styles
-   ============================ */
-
-#calendar, #per-asset-calendar, #booking-calendar-section-all-assets {
-  margin: 30px 0;
-  background-color: var(--table-row-bg);
-  border-radius: 8px;
+/* Calendar Containers */
+#calendar,
+#per-asset-calendar,
+#booking-calendar-section-all-assets {
+  margin: var(--spacing-xl) 0;
+  background-color: var(--color-table-row-bg);
+  border-radius: var(--border-radius-md);
   overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  box-shadow: var(--box-shadow-default);
+  transition: var(--transition-default);
 }
 
+/* Calendar Header */
 .calendar-header {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--table-header-bg);
-  padding: 15px;
+  background-color: var(--color-table-header-bg);
+  padding: var(--spacing-md);
 }
 
 .calendar-header button {
-  background-color: var(--button-bg-color);
-  margin: 0 20px;
+  background-color: var(--color-button-primary);
+  margin: 0 var(--spacing-xxl);
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition-default);
 }
 
 .calendar-header button:hover {
-  background-color: var(--button-hover-bg);
+  background-color: var(--color-button-primary-hover);
 }
 
 .calendar-header span {
   flex-grow: 1;
   text-align: center;
-  font-size: 1.2em;
-  font-weight: 500;
-  color: var(--text-color);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text);
 }
 
+/* Calendar Grid */
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
 }
 
-.calendar-day-header {
-  background-color: var(--table-header-bg);
-  padding: 10px 0;
-  text-align: center;
-  font-weight: 500;
-  color: white;
+/* Weekday Headers */
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background-color: var(--color-table-header-bg);
 }
 
+.calendar-day-header {
+  padding: 10px 0;
+  text-align: center;
+  font-weight: var(--font-weight-normal);
+  color: var(--color-nav-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Calendar Days */
 .calendar-day {
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   padding: 10px;
   text-align: center;
   position: relative;
-  background-color: var(--table-row-bg);
-  color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  background-color: var(--color-table-row-bg);
+  color: var(--color-text);
+  transition: var(--transition-default);
 }
 
 .calendar-day.empty {
   background-color: #f9f9f9;
 }
 
-.day-number {
-  font-weight: 500;
-  color: var(--text-color);
+.calendar-day .day-number {
+  font-weight: var(--font-weight-normal);
+}
+
+.calendar-day:hover {
+  background-color: #e0e0e0;
 }
 
 .booking-bar {
@@ -441,8 +507,14 @@ form button:hover {
   left: 5px;
   right: 5px;
   height: 8px;
-  border-radius: 4px;
+  background-color: var(--color-booking-bar);
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.booking-bar:hover {
+  opacity: 0.8;
 }
 
 /* ============================
@@ -450,33 +522,32 @@ form button:hover {
    ============================ */
 
 .calendar-legend {
-  margin-top: 20px;
+  margin-top: var(--spacing-md);
   display: flex;
   flex-wrap: wrap;
-  background-color: var(--legend-bg-color);
-  padding: 10px 20px;
-  border-top: 1px solid var(--border-color);
+  background-color: var(--color-legend-bg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-top: 1px solid var(--color-border);
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  margin-right: 15px;
-  margin-bottom: 10px;
+  margin-right: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
 }
 
 .legend-color-box {
-  display: inline-block;
   width: 15px;
   height: 15px;
-  margin-right: 5px;
-  border: 1px solid #000;
+  margin-right: var(--spacing-xs);
+  border: 1px solid var(--color-border);
   border-radius: 3px;
 }
 
 .legend-asset-name {
-  font-size: 0.9em;
-  color: var(--text-color);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
 }
 
 /* ============================
@@ -486,38 +557,36 @@ form button:hover {
 #booking-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
-  background-color: var(--table-row-bg);
-  border-radius: 8px;
+  margin-top: var(--spacing-md);
+  background-color: var(--color-table-row-bg);
+  border-radius: var(--border-radius-md);
   overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: var(--box-shadow-default);
 }
 
-#booking-table, #booking-table th, #booking-table td {
-  border: none;
-}
-
-#booking-table th, #booking-table td {
+#booking-table th,
+#booking-table td {
   padding: 15px 20px;
   text-align: left;
 }
 
 #booking-table th {
-  background-color: var(--table-header-bg);
-  font-weight: 500;
+  background-color: var(--color-table-header-bg);
+  font-weight: var(--font-weight-normal);
   text-transform: uppercase;
   font-size: 12px;
   color: #7f8c8d;
 }
 
 #booking-table tr:nth-child(even) {
-  background-color: var(--table-row-alt-bg);
+  background-color: var(--color-table-row-alt-bg);
 }
 
 /* ============================
    15. Responsive Design
    ============================ */
 
+/* Large Devices (Tablets, 768px and up) */
 @media (max-width: 1024px) {
   .asset-controls {
     flex-direction: column;
@@ -528,7 +597,7 @@ form button:hover {
   .asset-controls select,
   .asset-controls button {
     width: 100%;
-    margin-bottom: 10px;
+    margin-bottom: var(--spacing-sm);
   }
 
   .calendar-header {
@@ -536,7 +605,7 @@ form button:hover {
   }
 
   .calendar-header button {
-    margin: 10px 0;
+    margin: var(--spacing-sm) 0;
   }
 
   nav {
@@ -545,23 +614,24 @@ form button:hover {
   }
 
   nav h1 {
-    margin-bottom: 10px;
+    margin-bottom: var(--spacing-sm);
   }
 
-  nav #user-info {
+  nav .user-info {
     width: 100%;
     justify-content: space-between;
   }
 }
 
+/* Medium Devices (Mobile, 768px and below) */
 @media (max-width: 768px) {
   .modal-content {
     width: 90%;
-    padding: 20px;
+    padding: var(--spacing-md);
   }
 
   .calendar-header button {
-    margin: 10px 0;
+    margin: var(--spacing-sm) 0;
   }
 
   .booking-tooltip {
@@ -582,23 +652,22 @@ form button:hover {
    16. Tooltip Styles
    ============================ */
 
-/* Tooltip container */
+/* Tooltip Container */
 .booking-tooltip {
   display: none;
   position: absolute;
   top: -70px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: var(--tooltip-bg-color);
-  color: var(--tooltip-text-color);
+  background-color: var(--color-tooltip-bg);
+  color: var(--color-tooltip-text);
   padding: 8px 12px;
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
   white-space: nowrap;
-  z-index: 1001;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: var(--z-index-tooltip);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* Tooltip arrow */
 .booking-tooltip::after {
   content: '';
   position: absolute;
@@ -607,55 +676,54 @@ form button:hover {
   transform: translateX(-50%);
   border-width: 5px;
   border-style: solid;
-  border-color: var(--tooltip-bg-color) transparent transparent transparent;
+  border-color: var(--color-tooltip-bg) transparent transparent transparent;
 }
 
-/* Show tooltip on hover */
+/* Show Tooltip on Hover */
 .calendar-day:hover .booking-tooltip {
   display: block;
 }
 
 /* ============================
-   17. Booking Tooltip Enhancements
+   17. Accessibility Enhancements
    ============================ */
 
+/* Focus States */
+button:focus,
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--color-button-primary-hover);
+  outline-offset: 2px;
+}
+
+/* Ensure Sufficient Color Contrast */
+.status-icon.green,
+.status-icon.yellow,
+.status-icon.red,
+.status-icon.gray,
+.legend-color-box {
+  border: 1px solid var(--color-border);
+}
+
+.legend-asset-name,
+.calendar-header span,
+.status-icon,
+.booking-tooltip {
+  color: var(--color-text);
+}
+
+/* ============================
+   18. Booking Tooltip Enhancements
+   ============================ */
+
+/* Ensure Calendar Days are Positioned Relatively */
 .calendar-day {
   position: relative;
 }
 
-.calendar-day:hover {
-  background-color: #e0e0e0;
-}
-
+/* Hover Effects */
 .booking-bar:hover {
   opacity: 0.8;
-}
-
-/* ============================
-   18. Accessibility Enhancements
-   ============================ */
-
-/* Focus states for interactive elements */
-button:focus,
-a:focus,
-input:focus,
-select:focus {
-  outline: 2px solid var(--button-hover-bg);
-  outline-offset: 2px;
-}
-
-/* Ensure sufficient color contrast for text and backgrounds */
-.status-icon.green,
-.status-icon.yellow,
-.status-icon.red,
-.status-icon.gray {
-  border: 1px solid var(--border-color);
-}
-
-.legend-color-box {
-  border: 1px solid var(--border-color);
-}
-
-.legend-asset-name {
-  color: var(--text-color);
 }

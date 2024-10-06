@@ -87,23 +87,37 @@
   </section>
   
  <!-- All Bookings Calendar Section -->
-<section id="booking-calendar-section-all-assets">
+ <section id="booking-calendar-section-all-assets">
   <h2>All Bookings Calendar</h2>
+  
   <!-- Calendar Header -->
   <div id="all-assets-calendar-header">
     <button id="all-assets-prev-month-btn">&lt;</button>
     <span id="all-assets-calendar-month-year"></span>
     <button id="all-assets-next-month-btn">&gt;</button>
   </div>
+  
+  <!-- Weekday Headers -->
+  <div class="calendar-weekdays">
+    <div class="calendar-day-header">Sun</div>
+    <div class="calendar-day-header">Mon</div>
+    <div class="calendar-day-header">Tue</div>
+    <div class="calendar-day-header">Wed</div>
+    <div class="calendar-day-header">Thu</div>
+    <div class="calendar-day-header">Fri</div>
+    <div class="calendar-day-header">Sat</div>
+  </div>
+  
   <!-- Calendar Grid -->
-  <div id="all-assets-calendar-grid">
+  <div id="all-assets-calendar-grid" class="calendar-grid">
     <!-- Calendar days will be rendered here by app.js -->
   </div>
+  
   <!-- Legend -->
   <div class="calendar-legend">
     <!-- Legend items will be rendered here by app.js -->
   </div>
-</section>   
+</section>
       
       <!-- Asset Modal (Add/Edit) -->
       <div id="asset-modal" class="modal hidden">
@@ -128,17 +142,30 @@
   <button id="back-to-assets-btn">Back to Assets</button>
   <button id="add-booking-btn">Add New Booking</button>
   
-  <!-- Calendar -->
-  <div id="per-asset-calendar">
-    <div id="per-asset-calendar-header">
-      <button id="per-asset-prev-month-btn">&lt;</button>
-      <span id="per-asset-calendar-month-year"></span>
-      <button id="per-asset-next-month-btn">&gt;</button>
-    </div>
-    <div id="per-asset-calendar-grid">
-      <!-- Calendar days will be rendered here by app.js -->
-    </div>
+  <!-- Per-Asset Calendar -->
+<div id="per-asset-calendar">
+  <div class="calendar-header">
+    <button id="per-asset-prev-month-btn">&lt;</button>
+    <span id="per-asset-calendar-month-year"></span>
+    <button id="per-asset-next-month-btn">&gt;</button>
   </div>
+  
+  <!-- Weekday Headers -->
+  <div class="calendar-weekdays">
+    <div class="calendar-day-header">Sun</div>
+    <div class="calendar-day-header">Mon</div>
+    <div class="calendar-day-header">Tue</div>
+    <div class="calendar-day-header">Wed</div>
+    <div class="calendar-day-header">Thu</div>
+    <div class="calendar-day-header">Fri</div>
+    <div class="calendar-day-header">Sat</div>
+  </div>
+  
+  <!-- Calendar Grid -->
+  <div id="per-asset-calendar-grid" class="calendar-grid">
+    <!-- Dates will be rendered here by app.js -->
+  </div>
+</div>
   
   <!-- Bookings Table -->
   <table id="booking-table">

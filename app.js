@@ -31,7 +31,7 @@ const assetListSection = document.getElementById('asset-list-section');
 const assetTableBody = document.querySelector('#asset-table tbody');
 const addAssetBtn = document.getElementById('add-asset-btn');
 const assetSearchInput = document.getElementById('asset-search-input');
-const assetStatusFilter = document.getElementById('asset-status-filter'); // For admin filtering
+const assetStatusFilter = document.getElementById('asset-status-filter');
 const assetModal = document.getElementById('asset-modal');
 const closeAssetModalBtn = document.getElementById('close-asset-modal');
 const assetForm = document.getElementById('asset-form');
@@ -46,8 +46,8 @@ const addBookingBtn = document.getElementById('add-booking-btn');
 const bookingModal = document.getElementById('booking-modal');
 const closeBookingModalBtn = document.getElementById('close-booking-modal');
 const bookingForm = document.getElementById('booking-form');
-const bookingStartDatetimeInput = document.getElementById('booking-start-datetime-input'); // For datetime
-const bookingEndDatetimeInput = document.getElementById('booking-end-datetime-input');     // For datetime
+const bookingStartDatetimeInput = document.getElementById('booking-start-datetime-input');
+const bookingEndDatetimeInput = document.getElementById('booking-end-datetime-input');
 const bookingModalTitle = document.getElementById('booking-modal-title');
 const assetNameSpan = document.getElementById('asset-name');
 const bookingAssetNameSpan = document.getElementById('booking-asset-name');
@@ -154,11 +154,16 @@ function updateUserInterface() {
     }
 
     assetListSection.classList.remove('hidden');
+    allAssetsCalendarSection.classList.remove('hidden'); // Show All Assets Calendar
+    bookingSection.classList.add('hidden'); // Hide Booking Section by default
 
-    // Hide booking section if user is not admin
-    if (currentUserRole !== 'admin') {
-      bookingSection.classList.add('hidden');
+    // Listen for Dark Mode Toggle
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('change', (e) => {
+        applyDarkMode(e.target.checked);
+      });
     }
+
   } else {
     userInfoDiv.innerHTML = '';
   }
@@ -191,13 +196,6 @@ function applyDarkMode(isDark) {
   }
   // Save preference to localStorage
   localStorage.setItem('darkMode', isDark);
-}
-
-// Event listener for Dark Mode Toggle
-if (darkModeToggle) {
-  darkModeToggle.addEventListener('change', (e) => {
-    applyDarkMode(e.target.checked);
-  });
 }
 
 // Initialize Dark Mode based on saved preference
@@ -238,6 +236,10 @@ async function displayAssets() {
     if (assetIds.length === 0) {
       // No assets to display
       assetTableBody.innerHTML = '<tr><td colspan="4">No assets available.</td></tr>';
+      // Clear bookings and calendars
+      bookings = [];
+      renderAllAssetsCalendar();
+      filterAndDisplayAssets();
       return;
     }
 
@@ -525,6 +527,7 @@ async function showBookingSection(assetId) {
     assetNameSpan.textContent = assetData.name;
     bookingAssetNameSpan.textContent = assetData.name;
     assetListSection.classList.add('hidden');
+    allAssetsCalendarSection.classList.add('hidden'); // Hide All Assets Calendar
     bookingSection.classList.remove('hidden');
     currentDate = new Date(); // Reset to current date when viewing bookings
     await loadBookings();
@@ -630,6 +633,7 @@ if (backToAssetsBtn) {
   backToAssetsBtn.addEventListener('click', async () => {
     bookingSection.classList.add('hidden');
     assetListSection.classList.remove('hidden');
+    allAssetsCalendarSection.classList.remove('hidden'); // Show All Assets Calendar
     await displayAssets(); // Refresh asset statuses when returning
   });
 }
@@ -744,7 +748,7 @@ if (bookingForm) {
 function renderPerAssetCalendar() {
   if (!perAssetCalendarDiv) return;
 
-  // Clear existing calendar
+  // Clear existing calendar dates (but keep the weekday headers)
   perAssetCalendarGrid.innerHTML = '';
 
   const monthNames = [
@@ -760,18 +764,6 @@ function renderPerAssetCalendar() {
   if (perAssetCalendarMonthYear) {
     perAssetCalendarMonthYear.textContent = `${monthNames[month]} ${year}`;
   }
-
-  // Days of the week headers
-  const daysHeader = document.createElement('div');
-  daysHeader.classList.add('calendar-header');
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  dayNames.forEach((day) => {
-    const dayDiv = document.createElement('div');
-    dayDiv.classList.add('calendar-day-header');
-    dayDiv.textContent = day;
-    daysHeader.appendChild(dayDiv);
-  });
-  perAssetCalendarGrid.appendChild(daysHeader);
 
   // Dates Grid
   const datesGrid = document.createElement('div');
@@ -855,7 +847,7 @@ if (perAssetPrevMonthBtn && perAssetNextMonthBtn) {
 async function renderAllAssetsCalendar() {
   if (!allAssetsCalendarSection) return;
 
-  // Clear existing calendar grid
+  // Clear existing calendar dates (but keep the weekday headers)
   allAssetsCalendarGrid.innerHTML = '';
 
   const monthNames = [
@@ -871,18 +863,6 @@ async function renderAllAssetsCalendar() {
   if (allAssetsCalendarMonthYear) {
     allAssetsCalendarMonthYear.textContent = `${monthNames[month]} ${year}`;
   }
-
-  // Days of the week headers
-  const daysHeader = document.createElement('div');
-  daysHeader.classList.add('calendar-header');
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  dayNames.forEach((day) => {
-    const dayDiv = document.createElement('div');
-    dayDiv.classList.add('calendar-day-header');
-    dayDiv.textContent = day;
-    daysHeader.appendChild(dayDiv);
-  });
-  allAssetsCalendarGrid.appendChild(daysHeader);
 
   // Dates Grid
   const datesGrid = document.createElement('div');
