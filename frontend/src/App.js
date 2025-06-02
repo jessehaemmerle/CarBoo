@@ -1086,6 +1086,71 @@ const FleetDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Book Car Modal */}
+      {showBookingModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Request Car Booking</h2>
+            <form onSubmit={handleCreateBooking} className="space-y-4">
+              <select
+                value={bookingForm.car_id}
+                onChange={(e) => setBookingForm({ ...bookingForm, car_id: e.target.value })}
+                className="w-full border rounded px-3 py-2"
+                required
+              >
+                <option value="">Select Car</option>
+                {cars.filter(car => car.status === 'available').map(car => (
+                  <option key={car.id} value={car.id}>
+                    {car.year} {car.make} {car.model} - {car.license_plate}
+                  </option>
+                ))}
+              </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                  <input
+                    type="datetime-local"
+                    value={bookingForm.start_date}
+                    onChange={(e) => setBookingForm({ ...bookingForm, start_date: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                  <input
+                    type="datetime-local"
+                    value={bookingForm.end_date}
+                    onChange={(e) => setBookingForm({ ...bookingForm, end_date: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
+                    required
+                  />
+                </div>
+              </div>
+              <textarea
+                placeholder="Purpose of booking (e.g., client meeting, business travel)"
+                value={bookingForm.purpose}
+                onChange={(e) => setBookingForm({ ...bookingForm, purpose: e.target.value })}
+                className="w-full border rounded px-3 py-2 h-20"
+                required
+              />
+              <div className="flex space-x-4">
+                <button type="submit" className="flex-1 bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
+                  Request Booking
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBookingModal(false)}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
