@@ -1011,6 +1011,94 @@ const FleetDashboard = () => {
         </div>
       )}
 
+      {/* Edit Car Modal */}
+      {showEditCarModal && isManager() && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Edit Car</h2>
+            <form onSubmit={handleEditCar} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Make"
+                  value={carForm.make}
+                  onChange={(e) => setCarForm({ ...carForm, make: e.target.value })}
+                  className="border rounded px-3 py-2"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Model"
+                  value={carForm.model}
+                  onChange={(e) => setCarForm({ ...carForm, model: e.target.value })}
+                  className="border rounded px-3 py-2"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="number"
+                  placeholder="Year"
+                  value={carForm.year}
+                  onChange={(e) => setCarForm({ ...carForm, year: e.target.value })}
+                  className="border rounded px-3 py-2"
+                  required
+                />
+                <select
+                  value={carForm.category}
+                  onChange={(e) => setCarForm({ ...carForm, category: e.target.value })}
+                  className="border rounded px-3 py-2"
+                >
+                  {carCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+              <input
+                type="text"
+                placeholder="License Plate"
+                value={carForm.license_plate}
+                onChange={(e) => setCarForm({ ...carForm, license_plate: e.target.value })}
+                className="w-full border rounded px-3 py-2"
+                required
+              />
+              <input
+                type="text"
+                placeholder="VIN"
+                value={carForm.vin}
+                onChange={(e) => setCarForm({ ...carForm, vin: e.target.value })}
+                className="w-full border rounded px-3 py-2"
+                required
+              />
+              <input
+                type="number"
+                placeholder="Mileage"
+                value={carForm.mileage}
+                onChange={(e) => setCarForm({ ...carForm, mileage: e.target.value })}
+                className="w-full border rounded px-3 py-2"
+                required
+              />
+              <div className="flex space-x-4">
+                <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                  Update Car
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditCarModal(false);
+                    setEditingCar(null);
+                    setCarForm({ make: '', model: '', year: '', license_plate: '', vin: '', mileage: '', category: 'sedan' });
+                  }}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Add Downtime Modal */}
       {showAddDowntimeModal && isManager() && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
