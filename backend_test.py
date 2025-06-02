@@ -12,6 +12,9 @@ import string
 BACKEND_URL = "https://2c450bf5-ffe9-49a2-ba07-d35dc10e37e9.preview.emergentagent.com"
 API_URL = f"{BACKEND_URL}/api"
 
+# Set to True to enable verbose output
+VERBOSE = True
+
 # Test data
 test_cars = [
     {
