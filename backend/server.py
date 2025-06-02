@@ -317,25 +317,25 @@ async def delete_user(user_id: str, current_manager: User = Depends(get_current_
 
 # Car routes
 @api_router.get("/cars", response_model=List[Car])
-async def get_cars():
+async def get_cars(current_user: User = Depends(get_current_user)):
     cars = await db.cars.find().to_list(1000)
     return [Car(**car) for car in cars]
 
 @api_router.post("/cars", response_model=Car)
-async def create_car(car_data: CarCreate):
+async def create_car(car_data: CarCreate, current_manager: User = Depends(get_current_manager)):
     car = Car(**car_data.dict())
     await db.cars.insert_one(car.dict())
     return car
 
 @api_router.get("/cars/{car_id}", response_model=Car)
-async def get_car(car_id: str):
+async def get_car(car_id: str, current_user: User = Depends(get_current_user)):
     car = await db.cars.find_one({"id": car_id})
     if not car:
         raise HTTPException(status_code=404, detail="Car not found")
     return Car(**car)
 
 @api_router.put("/cars/{car_id}", response_model=Car)
-async def update_car(car_id: str, car_update: CarUpdate):
+async def update_car(car_id: str, car_update: CarUpdate, current_manager: User = Depends(get_current_manager)):
     update_data = {k: v for k, v in car_update.dict().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No update data provided")
@@ -348,7 +348,7 @@ async def update_car(car_id: str, car_update: CarUpdate):
     return Car(**updated_car)
 
 @api_router.delete("/cars/{car_id}")
-async def delete_car(car_id: str):
+async def delete_car(car_id: str, current_manager: User = Depends(get_current_manager)):
     result = await db.cars.delete_one({"id": car_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Car not found")
