@@ -50,6 +50,17 @@ def create_downtime_data(car_id, reason="maintenance"):
         "cost": 150.75
     }
 
+# Test data for bookings
+def create_booking_data(car_id, days_from_now=1, duration_days=2):
+    start_date = datetime.utcnow() + timedelta(days=days_from_now)
+    end_date = start_date + timedelta(days=duration_days)
+    return {
+        "car_id": car_id,
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        "purpose": f"Test booking created at {datetime.utcnow().isoformat()}"
+    }
+
 # Test data for users
 def generate_random_email():
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
