@@ -173,6 +173,51 @@ class FleetStats(BaseModel):
     in_use: int
     maintenance: int
 
+# Booking Models
+class Booking(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    car_id: str
+    user_id: str
+    start_date: datetime
+    end_date: datetime
+    purpose: str
+    status: BookingStatus = BookingStatus.PENDING
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class BookingCreate(BaseModel):
+    car_id: str
+    start_date: datetime
+    end_date: datetime
+    purpose: str
+
+class BookingUpdate(BaseModel):
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    purpose: Optional[str] = None
+
+class BookingApproval(BaseModel):
+    status: BookingStatus
+    rejection_reason: Optional[str] = None
+
+class BookingResponse(BaseModel):
+    id: str
+    car_id: str
+    user_id: str
+    start_date: datetime
+    end_date: datetime
+    purpose: str
+    status: BookingStatus
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    created_at: datetime
+    car_info: Optional[dict] = None
+    user_info: Optional[dict] = None
+    approver_info: Optional[dict] = None
+
 # Authentication Helper Functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
