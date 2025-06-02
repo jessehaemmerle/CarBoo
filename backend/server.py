@@ -64,6 +64,13 @@ class DowntimeReason(str, Enum):
     INSPECTION = "inspection"
     OTHER = "other"
 
+class BookingStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
 # Authentication Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
