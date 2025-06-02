@@ -359,17 +359,17 @@ async def delete_car(car_id: str, current_manager: User = Depends(get_current_ma
 
 # Downtime routes
 @api_router.get("/downtimes", response_model=List[Downtime])
-async def get_downtimes():
+async def get_downtimes(current_user: User = Depends(get_current_user)):
     downtimes = await db.downtimes.find().sort("start_date", -1).to_list(1000)
     return [Downtime(**downtime) for downtime in downtimes]
 
 @api_router.get("/downtimes/car/{car_id}", response_model=List[Downtime])
-async def get_car_downtimes(car_id: str):
+async def get_car_downtimes(car_id: str, current_user: User = Depends(get_current_user)):
     downtimes = await db.downtimes.find({"car_id": car_id}).sort("start_date", -1).to_list(1000)
     return [Downtime(**downtime) for downtime in downtimes]
 
 @api_router.post("/downtimes", response_model=Downtime)
-async def create_downtime(downtime_data: DowntimeCreate):
+async def create_downtime(downtime_data: DowntimeCreate, current_manager: User = Depends(get_current_manager)):
     # Check if car exists
     car = await db.cars.find_one({"id": downtime_data.car_id})
     if not car:
@@ -385,7 +385,7 @@ async def create_downtime(downtime_data: DowntimeCreate):
     return downtime
 
 @api_router.put("/downtimes/{downtime_id}", response_model=Downtime)
-async def update_downtime(downtime_id: str, downtime_update: DowntimeUpdate):
+async def update_downtime(downtime_id: str, downtime_update: DowntimeUpdate, current_manager: User = Depends(get_current_manager)):
     update_data = {k: v for k, v in downtime_update.dict().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No update data provided")
@@ -398,7 +398,7 @@ async def update_downtime(downtime_id: str, downtime_update: DowntimeUpdate):
     return Downtime(**updated_downtime)
 
 @api_router.delete("/downtimes/{downtime_id}")
-async def delete_downtime(downtime_id: str):
+async def delete_downtime(downtime_id: str, current_manager: User = Depends(get_current_manager)):
     result = await db.downtimes.delete_one({"id": downtime_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Downtime not found")
@@ -406,7 +406,7 @@ async def delete_downtime(downtime_id: str):
 
 # Dashboard routes
 @api_router.get("/fleet/stats", response_model=FleetStats)
-async def get_fleet_stats():
+async def get_fleet_stats(current_user: User = Depends(get_current_user)):
     total_cars = await db.cars.count_documents({})
     available_cars = await db.cars.count_documents({"status": CarStatus.AVAILABLE})
     in_downtime = await db.cars.count_documents({"status": CarStatus.DOWNTIME})
@@ -422,7 +422,7 @@ async def get_fleet_stats():
     )
 
 @api_router.get("/fleet/categories")
-async def get_fleet_by_category():
+async def get_fleet_by_category(current_user: User = Depends(get_current_user)):
     pipeline = [
         {"$group": {"_id": "$category", "count": {"$sum": 1}}},
         {"$sort": {"count": -1}}
