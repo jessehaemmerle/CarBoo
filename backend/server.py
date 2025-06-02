@@ -38,6 +38,10 @@ app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
 # Enums
+class UserRole(str, Enum):
+    FLEET_MANAGER = "fleet_manager"
+    REGULAR_USER = "regular_user"
+
 class CarCategory(str, Enum):
     SEDAN = "sedan"
     SUV = "suv"
@@ -59,6 +63,44 @@ class DowntimeReason(str, Enum):
     CLEANING = "cleaning"
     INSPECTION = "inspection"
     OTHER = "other"
+
+# Authentication Models
+class User(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    email: EmailStr
+    role: UserRole
+    department: Optional[str] = None
+    phone: Optional[str] = None
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    role: UserRole
+    department: Optional[str] = None
+    phone: Optional[str] = None
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: str
+    name: str
+    email: EmailStr
+    role: UserRole
+    department: Optional[str] = None
+    phone: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse
 
 # Models
 class Car(BaseModel):
