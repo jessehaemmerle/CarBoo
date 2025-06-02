@@ -334,7 +334,52 @@ const FleetDashboard = () => {
       fetchData();
     } catch (error) {
       console.error('Error adding car:', error);
+      alert(error.response?.data?.detail || 'Error adding car');
     }
+  };
+
+  const handleEditCar = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`${API}/cars/${editingCar.id}`, {
+        ...carForm,
+        year: parseInt(carForm.year),
+        mileage: parseInt(carForm.mileage)
+      });
+      setCarForm({ make: '', model: '', year: '', license_plate: '', vin: '', mileage: '', category: 'sedan' });
+      setShowEditCarModal(false);
+      setEditingCar(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error updating car:', error);
+      alert(error.response?.data?.detail || 'Error updating car');
+    }
+  };
+
+  const handleDeleteCar = async (carId, carName) => {
+    if (window.confirm(`Are you sure you want to delete ${carName}? This will also delete all associated downtimes.`)) {
+      try {
+        await axios.delete(`${API}/cars/${carId}`);
+        fetchData();
+      } catch (error) {
+        console.error('Error deleting car:', error);
+        alert(error.response?.data?.detail || 'Error deleting car');
+      }
+    }
+  };
+
+  const openEditCarModal = (car) => {
+    setEditingCar(car);
+    setCarForm({
+      make: car.make,
+      model: car.model,
+      year: car.year.toString(),
+      license_plate: car.license_plate,
+      vin: car.vin,
+      mileage: car.mileage.toString(),
+      category: car.category
+    });
+    setShowEditCarModal(true);
   };
 
   const handleAddDowntime = async (e) => {
