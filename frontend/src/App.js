@@ -554,16 +554,32 @@ const FleetDashboard = () => {
               <p><span className="font-medium">Category:</span> {car.category}</p>
             </div>
             {isManager() ? (
-              <button
-                onClick={() => {
-                  setSelectedCar(car.id);
-                  setDowntimeForm({ ...downtimeForm, car_id: car.id });
-                  setShowAddDowntimeModal(true);
-                }}
-                className="mt-4 w-full bg-gray-100 text-gray-700 py-2 rounded hover:bg-gray-200 transition-colors"
-              >
-                Add Downtime
-              </button>
+              <div className="mt-4 space-y-2">
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => openEditCarModal(car)}
+                    className="flex-1 bg-blue-100 text-blue-700 py-2 rounded hover:bg-blue-200 transition-colors text-sm"
+                  >
+                    Edit Car
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCar(car.id, `${car.year} ${car.make} ${car.model}`)}
+                    className="flex-1 bg-red-100 text-red-700 py-2 rounded hover:bg-red-200 transition-colors text-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedCar(car.id);
+                    setDowntimeForm({ ...downtimeForm, car_id: car.id });
+                    setShowAddDowntimeModal(true);
+                  }}
+                  className="w-full bg-gray-100 text-gray-700 py-2 rounded hover:bg-gray-200 transition-colors text-sm"
+                >
+                  Add Downtime
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => {
