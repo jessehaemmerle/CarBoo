@@ -844,6 +844,7 @@ const FleetDashboard = () => {
       <main className="max-w-7xl mx-auto py-6 px-4">
         {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'cars' && <CarsView />}
+        {activeTab === 'bookings' && <BookingsView />}
         {activeTab === 'downtimes' && <DowntimesView />}
         {activeTab === 'users' && isManager() && <UsersView />}
       </main>
