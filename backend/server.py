@@ -166,6 +166,155 @@ class FleetStats(BaseModel):
     in_use: int
     maintenance: int
 
+# Authentication Helper Functions
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except jwt.PyJWTError:
+        raise credentials_exception
+    
+    user = await db.users.find_one({"id": user_id})
+    if user is None:
+        raise credentials_exception
+    return User(**user)
+
+async def get_current_manager(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != UserRole.FLEET_MANAGER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only fleet managers can access this resource"
+        )
+    return current_user
+
+# Authentication routes
+@api_router.post("/auth/register", response_model=Token)
+async def register_user(user_data: UserCreate):
+    # Check if user already exists
+    existing_user = await db.users.find_one({"email": user_data.email})
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create new user
+    hashed_password = get_password_hash(user_data.password)
+    user = User(
+        name=user_data.name,
+        email=user_data.email,
+        role=user_data.role,
+        department=user_data.department,
+        phone=user_data.phone
+    )
+    
+    # Store user with hashed password
+    user_dict = user.dict()
+    user_dict["password_hash"] = hashed_password
+    await db.users.insert_one(user_dict)
+    
+    # Create access token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.id}, expires_delta=access_token_expires
+    )
+    
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse(**user.dict())
+    )
+
+@api_router.post("/auth/login", response_model=Token)
+async def login_user(user_credentials: UserLogin):
+    # Find user by email
+    user = await db.users.find_one({"email": user_credentials.email})
+    if not user or not verify_password(user_credentials.password, user["password_hash"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Create access token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user["id"]}, expires_delta=access_token_expires
+    )
+    
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse(**{k: v for k, v in user.items() if k != "password_hash"})
+    )
+
+@api_router.get("/auth/me", response_model=UserResponse)
+async def get_current_user_info(current_user: User = Depends(get_current_user)):
+    return UserResponse(**current_user.dict())
+
+# User Management routes (only for managers)
+@api_router.get("/users", response_model=List[UserResponse])
+async def get_all_users(current_manager: User = Depends(get_current_manager)):
+    users = await db.users.find().to_list(1000)
+    return [UserResponse(**{k: v for k, v in user.items() if k != "password_hash"}) for user in users]
+
+@api_router.post("/users", response_model=UserResponse)
+async def create_user_by_manager(user_data: UserCreate, current_manager: User = Depends(get_current_manager)):
+    # Check if user already exists
+    existing_user = await db.users.find_one({"email": user_data.email})
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create new user
+    hashed_password = get_password_hash(user_data.password)
+    user = User(
+        name=user_data.name,
+        email=user_data.email,
+        role=user_data.role,
+        department=user_data.department,
+        phone=user_data.phone
+    )
+    
+    # Store user with hashed password
+    user_dict = user.dict()
+    user_dict["password_hash"] = hashed_password
+    await db.users.insert_one(user_dict)
+    
+    return UserResponse(**user.dict())
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(user_id: str, current_manager: User = Depends(get_current_manager)):
+    result = await db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User deleted successfully"}
+
 # Car routes
 @api_router.get("/cars", response_model=List[Car])
 async def get_cars():
