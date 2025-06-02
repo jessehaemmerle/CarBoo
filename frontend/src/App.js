@@ -257,6 +257,7 @@ const FleetDashboard = () => {
   const { user, logout, isManager } = useAuth();
   const [cars, setCars] = useState([]);
   const [downtimes, setDowntimes] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [users, setUsers] = useState([]);
   const [fleetStats, setFleetStats] = useState({});
   const [categoryStats, setCategoryStats] = useState([]);
@@ -264,6 +265,7 @@ const FleetDashboard = () => {
   const [showAddCarModal, setShowAddCarModal] = useState(false);
   const [showAddDowntimeModal, setShowAddDowntimeModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedCar, setSelectedCar] = useState(null);
 
   // Form states
@@ -276,6 +278,9 @@ const FleetDashboard = () => {
   const [userForm, setUserForm] = useState({
     name: '', email: '', password: '', role: 'regular_user', department: '', phone: ''
   });
+  const [bookingForm, setBookingForm] = useState({
+    car_id: '', start_date: '', end_date: '', purpose: ''
+  });
 
   const carCategories = ['sedan', 'suv', 'truck', 'van', 'hatchback', 'coupe'];
   const downtimeReasons = ['maintenance', 'repair', 'accident', 'cleaning', 'inspection', 'other'];
@@ -286,20 +291,28 @@ const FleetDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [carsRes, downtimesRes, statsRes, categoriesRes] = await Promise.all([
+      const requests = [
         axios.get(`${API}/cars`),
         axios.get(`${API}/downtimes`),
+        axios.get(`${API}/bookings`),
         axios.get(`${API}/fleet/stats`),
         axios.get(`${API}/fleet/categories`)
-      ]);
-      setCars(carsRes.data);
-      setDowntimes(downtimesRes.data);
-      setFleetStats(statsRes.data);
-      setCategoryStats(categoriesRes.data);
+      ];
 
       if (isManager()) {
-        const usersRes = await axios.get(`${API}/users`);
-        setUsers(usersRes.data);
+        requests.push(axios.get(`${API}/users`));
+      }
+
+      const responses = await Promise.all(requests);
+      
+      setCars(responses[0].data);
+      setDowntimes(responses[1].data);
+      setBookings(responses[2].data);
+      setFleetStats(responses[3].data);
+      setCategoryStats(responses[4].data);
+
+      if (isManager() && responses[5]) {
+        setUsers(responses[5].data);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
