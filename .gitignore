@@ -68,3 +68,37 @@ __pycache__/
 
 # Android SDK
 android-sdk/
+
+# ===================
+# FLEET MANAGEMENT SYSTEM SPECIFIC
+# ===================
+
+# Environment files (contains sensitive information)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Docker volumes and data
+mongodb_data/
+mongodb_data_prod/
+
+# Logs
+nginx/logs/
+*.log
+logs/
+
+# SSL certificates
+nginx/ssl/
+ssl/
+*.key
+*.crt
+
+# Backup files
+fleet_backup_*.tar.gz
+backup_*/
+
+# Local configuration overrides
+docker-compose.local.yml
+local.yml
