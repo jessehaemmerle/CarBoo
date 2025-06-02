@@ -635,6 +635,166 @@ const FleetDashboard = () => {
     </div>
   );
 
+  const getBookingStatusColor = (status) => {
+    const colors = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      approved: 'bg-green-100 text-green-800',
+      rejected: 'bg-red-100 text-red-800',
+      completed: 'bg-blue-100 text-blue-800',
+      cancelled: 'bg-gray-100 text-gray-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const BookingsView = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">
+          {isManager() ? 'All Bookings' : 'My Bookings'}
+        </h2>
+        <button
+          onClick={() => setShowBookingModal(true)}
+          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+        >
+          Request Booking
+        </button>
+      </div>
+
+      {/* Pending Approvals for Managers */}
+      {isManager() && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold mb-4">Pending Approvals</h3>
+          <div className="space-y-4">
+            {bookings.filter(b => b.status === 'pending').map((booking) => (
+              <div key={booking.id} className="border rounded-lg p-4 bg-yellow-50">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className="font-medium">{booking.user_info?.name}</span>
+                      <span className="text-gray-600">requested</span>
+                      <span className="font-medium">
+                        {booking.car_info ? `${booking.car_info.year} ${booking.car_info.make} ${booking.car_info.model}` : 'Unknown Car'}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p><span className="font-medium">Period:</span> {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}</p>
+                      <p><span className="font-medium">Purpose:</span> {booking.purpose}</p>
+                      <p><span className="font-medium">Department:</span> {booking.user_info?.department || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2 ml-4">
+                    <button
+                      onClick={() => handleApproveRejectBooking(booking.id, 'approved')}
+                      className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => {
+                        const reason = prompt('Rejection reason (optional):');
+                        handleApproveRejectBooking(booking.id, 'rejected', reason);
+                      }}
+                      className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {bookings.filter(b => b.status === 'pending').length === 0 && (
+              <p className="text-gray-500 text-center py-4">No pending approvals</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* All Bookings */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Car</th>
+                {isManager() && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>}
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {bookings.map((booking) => (
+                <tr key={booking.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div>
+                      <div className="font-medium">
+                        {booking.car_info ? `${booking.car_info.year} ${booking.car_info.make} ${booking.car_info.model}` : 'Unknown Car'}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {booking.car_info?.license_plate}
+                      </div>
+                    </div>
+                  </td>
+                  {isManager() && (
+                    <td className="px-6 py-4">
+                      <div>
+                        <div className="font-medium">{booking.user_info?.name}</div>
+                        <div className="text-sm text-gray-600">{booking.user_info?.department}</div>
+                      </div>
+                    </td>
+                  )}
+                  <td className="px-6 py-4 text-sm">
+                    <div>{new Date(booking.start_date).toLocaleDateString()}</div>
+                    <div className="text-gray-600">to {new Date(booking.end_date).toLocaleDateString()}</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm">{booking.purpose}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getBookingStatusColor(booking.status)}`}>
+                      {booking.status.toUpperCase()}
+                    </span>
+                    {booking.status === 'rejected' && booking.rejection_reason && (
+                      <div className="text-xs text-red-600 mt-1">{booking.rejection_reason}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {booking.status === 'pending' && (
+                      <button
+                        onClick={() => handleCancelBooking(booking.id)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                    {isManager() && booking.status === 'pending' && (
+                      <div className="space-x-2">
+                        <button
+                          onClick={() => handleApproveRejectBooking(booking.id, 'approved')}
+                          className="text-green-600 hover:text-green-800 text-sm"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => {
+                            const reason = prompt('Rejection reason (optional):');
+                            handleApproveRejectBooking(booking.id, 'rejected', reason);
+                          }}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', visible: true },
     { id: 'cars', name: 'Cars', visible: true },
