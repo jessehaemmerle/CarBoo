@@ -367,6 +367,295 @@ async def delete_user(user_id: str, current_manager: User = Depends(get_current_
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted successfully"}
 
+# Booking Helper Functions
+async def check_car_availability(car_id: str, start_date: datetime, end_date: datetime, exclude_booking_id: Optional[str] = None):
+    """Check if a car is available for booking during the specified period"""
+    
+    # Check if car exists and is not in permanent downtime
+    car = await db.cars.find_one({"id": car_id})
+    if not car:
+        return False, "Car not found"
+    
+    # Check for overlapping downtimes
+    downtime_query = {
+        "car_id": car_id,
+        "$or": [
+            {
+                "start_date": {"$lte": end_date},
+                "end_date": {"$gte": start_date}
+            },
+            {
+                "start_date": {"$lte": end_date},
+                "end_date": None  # Ongoing downtime
+            }
+        ]
+    }
+    
+    existing_downtime = await db.downtimes.find_one(downtime_query)
+    if existing_downtime:
+        return False, "Car has scheduled downtime during this period"
+    
+    # Check for overlapping approved bookings
+    booking_query = {
+        "car_id": car_id,
+        "status": {"$in": [BookingStatus.APPROVED, BookingStatus.PENDING]},
+        "$or": [
+            {
+                "start_date": {"$lte": end_date},
+                "end_date": {"$gte": start_date}
+            }
+        ]
+    }
+    
+    if exclude_booking_id:
+        booking_query["id"] = {"$ne": exclude_booking_id}
+    
+    existing_booking = await db.bookings.find_one(booking_query)
+    if existing_booking:
+        return False, "Car is already booked during this period"
+    
+    return True, "Car is available"
+
+async def get_booking_with_details(booking_id: str):
+    """Get booking with car, user, and approver details"""
+    booking = await db.bookings.find_one({"id": booking_id})
+    if not booking:
+        return None
+    
+    # Get car details
+    car = await db.cars.find_one({"id": booking["car_id"]})
+    
+    # Get user details
+    user = await db.users.find_one({"id": booking["user_id"]})
+    
+    # Get approver details if exists
+    approver = None
+    if booking.get("approved_by"):
+        approver = await db.users.find_one({"id": booking["approved_by"]})
+    
+    # Build response
+    booking_response = BookingResponse(**booking)
+    if car:
+        booking_response.car_info = {
+            "make": car["make"],
+            "model": car["model"],
+            "year": car["year"],
+            "license_plate": car["license_plate"],
+            "category": car["category"]
+        }
+    if user:
+        booking_response.user_info = {
+            "name": user["name"],
+            "email": user["email"],
+            "department": user.get("department")
+        }
+    if approver:
+        booking_response.approver_info = {
+            "name": approver["name"],
+            "email": approver["email"]
+        }
+    
+    return booking_response
+
+# Booking routes
+@api_router.get("/bookings", response_model=List[BookingResponse])
+async def get_bookings(current_user: User = Depends(get_current_user)):
+    """Get bookings - all for managers, own bookings for regular users"""
+    if current_user.role == UserRole.FLEET_MANAGER:
+        # Managers can see all bookings
+        bookings = await db.bookings.find().sort("created_at", -1).to_list(1000)
+    else:
+        # Regular users can only see their own bookings
+        bookings = await db.bookings.find({"user_id": current_user.id}).sort("created_at", -1).to_list(1000)
+    
+    # Get detailed booking information
+    detailed_bookings = []
+    for booking in bookings:
+        detailed_booking = await get_booking_with_details(booking["id"])
+        if detailed_booking:
+            detailed_bookings.append(detailed_booking)
+    
+    return detailed_bookings
+
+@api_router.get("/bookings/{booking_id}", response_model=BookingResponse)
+async def get_booking(booking_id: str, current_user: User = Depends(get_current_user)):
+    """Get specific booking details"""
+    booking = await db.bookings.find_one({"id": booking_id})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Check if user can access this booking
+    if current_user.role != UserRole.FLEET_MANAGER and booking["user_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    detailed_booking = await get_booking_with_details(booking_id)
+    return detailed_booking
+
+@api_router.post("/bookings", response_model=BookingResponse)
+async def create_booking(booking_data: BookingCreate, current_user: User = Depends(get_current_user)):
+    """Create a new booking request"""
+    
+    # Validate dates
+    if booking_data.start_date >= booking_data.end_date:
+        raise HTTPException(status_code=400, detail="End date must be after start date")
+    
+    if booking_data.start_date < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Start date cannot be in the past")
+    
+    # Check car availability
+    available, message = await check_car_availability(
+        booking_data.car_id, 
+        booking_data.start_date, 
+        booking_data.end_date
+    )
+    
+    if not available:
+        raise HTTPException(status_code=400, detail=message)
+    
+    # Create booking
+    booking = Booking(
+        car_id=booking_data.car_id,
+        user_id=current_user.id,
+        start_date=booking_data.start_date,
+        end_date=booking_data.end_date,
+        purpose=booking_data.purpose
+    )
+    
+    await db.bookings.insert_one(booking.dict())
+    
+    # Return detailed booking
+    detailed_booking = await get_booking_with_details(booking.id)
+    return detailed_booking
+
+@api_router.put("/bookings/{booking_id}", response_model=BookingResponse)
+async def update_booking(booking_id: str, booking_update: BookingUpdate, current_user: User = Depends(get_current_user)):
+    """Update booking (only by owner and only if pending)"""
+    
+    booking = await db.bookings.find_one({"id": booking_id})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Check permissions
+    if booking["user_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only update your own bookings")
+    
+    if booking["status"] != BookingStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Only pending bookings can be updated")
+    
+    # Build update data
+    update_data = {k: v for k, v in booking_update.dict().items() if v is not None}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No update data provided")
+    
+    # If dates are being updated, check availability
+    if "start_date" in update_data or "end_date" in update_data:
+        new_start = update_data.get("start_date", booking["start_date"])
+        new_end = update_data.get("end_date", booking["end_date"])
+        
+        if new_start >= new_end:
+            raise HTTPException(status_code=400, detail="End date must be after start date")
+        
+        available, message = await check_car_availability(
+            booking["car_id"], 
+            new_start, 
+            new_end,
+            exclude_booking_id=booking_id
+        )
+        
+        if not available:
+            raise HTTPException(status_code=400, detail=message)
+    
+    # Update booking
+    result = await db.bookings.update_one({"id": booking_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Return updated booking
+    detailed_booking = await get_booking_with_details(booking_id)
+    return detailed_booking
+
+@api_router.put("/bookings/{booking_id}/approve", response_model=BookingResponse)
+async def approve_reject_booking(booking_id: str, approval_data: BookingApproval, current_manager: User = Depends(get_current_manager)):
+    """Approve or reject a booking (managers only)"""
+    
+    booking = await db.bookings.find_one({"id": booking_id})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    if booking["status"] != BookingStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Only pending bookings can be approved or rejected")
+    
+    # If approving, check availability again
+    if approval_data.status == BookingStatus.APPROVED:
+        available, message = await check_car_availability(
+            booking["car_id"], 
+            booking["start_date"], 
+            booking["end_date"],
+            exclude_booking_id=booking_id
+        )
+        
+        if not available:
+            raise HTTPException(status_code=400, detail=f"Cannot approve: {message}")
+    
+    # Update booking
+    update_data = {
+        "status": approval_data.status,
+        "approved_by": current_manager.id,
+        "approved_at": datetime.utcnow()
+    }
+    
+    if approval_data.status == BookingStatus.REJECTED and approval_data.rejection_reason:
+        update_data["rejection_reason"] = approval_data.rejection_reason
+    
+    result = await db.bookings.update_one({"id": booking_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Return updated booking
+    detailed_booking = await get_booking_with_details(booking_id)
+    return detailed_booking
+
+@api_router.delete("/bookings/{booking_id}")
+async def cancel_booking(booking_id: str, current_user: User = Depends(get_current_user)):
+    """Cancel a booking"""
+    
+    booking = await db.bookings.find_one({"id": booking_id})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Check permissions
+    if current_user.role != UserRole.FLEET_MANAGER and booking["user_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only cancel your own bookings")
+    
+    if booking["status"] in [BookingStatus.COMPLETED, BookingStatus.CANCELLED]:
+        raise HTTPException(status_code=400, detail="Cannot cancel completed or already cancelled bookings")
+    
+    # Update booking status to cancelled
+    result = await db.bookings.update_one(
+        {"id": booking_id}, 
+        {"$set": {"status": BookingStatus.CANCELLED}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    return {"message": "Booking cancelled successfully"}
+
+@api_router.get("/cars/{car_id}/availability")
+async def check_car_availability_endpoint(car_id: str, start_date: datetime, end_date: datetime, current_user: User = Depends(get_current_user)):
+    """Check if a car is available for booking"""
+    
+    available, message = await check_car_availability(car_id, start_date, end_date)
+    
+    return {
+        "available": available,
+        "message": message,
+        "car_id": car_id,
+        "start_date": start_date,
+        "end_date": end_date
+    }
+
 # Car routes
 @api_router.get("/cars", response_model=List[Car])
 async def get_cars(current_user: User = Depends(get_current_user)):
