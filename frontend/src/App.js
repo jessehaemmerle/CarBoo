@@ -263,10 +263,12 @@ const FleetDashboard = () => {
   const [categoryStats, setCategoryStats] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAddCarModal, setShowAddCarModal] = useState(false);
+  const [showEditCarModal, setShowEditCarModal] = useState(false);
   const [showAddDowntimeModal, setShowAddDowntimeModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedCar, setSelectedCar] = useState(null);
+  const [editingCar, setEditingCar] = useState(null);
 
   // Form states
   const [carForm, setCarForm] = useState({
