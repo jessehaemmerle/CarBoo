@@ -1,18 +1,269 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import "./App.css";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Authentication Context
+const AuthContext = createContext();
+
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      fetchCurrentUser();
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await axios.get(`${API}/auth/me`);
+      setUser(response.data);
+    } catch (error) {
+      localStorage.removeItem('token');
+      delete axios.defaults.headers.common['Authorization'];
+    }
+    setLoading(false);
+  };
+
+  const login = async (email, password) => {
+    try {
+      const response = await axios.post(`${API}/auth/login`, { email, password });
+      const { access_token, user: userData } = response.data;
+      localStorage.setItem('token', access_token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+      setUser(userData);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.detail || 'Login failed' };
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      const response = await axios.post(`${API}/auth/register`, userData);
+      const { access_token, user: newUser } = response.data;
+      localStorage.setItem('token', access_token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+      setUser(newUser);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.detail || 'Registration failed' };
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    delete axios.defaults.headers.common['Authorization'];
+    setUser(null);
+  };
+
+  const isManager = () => user?.role === 'fleet_manager';
+
+  return (
+    <AuthContext.Provider value={{ user, login, register, logout, loading, isManager }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+const LoginForm = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({
+    name: '', email: '', password: '', role: 'fleet_manager', department: '', phone: ''
+  });
+  const { login, register } = useAuth();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    const result = await login(email, password);
+    if (!result.success) {
+      setError(result.error);
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError('');
+    const result = await register(formData);
+    if (!result.success) {
+      setError(result.error);
+    }
+  };
+
+  if (isLogin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              🚗 Fleet Manager Login
+            </h2>
+          </div>
+          <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" onSubmit={handleLogin}>
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                {error}
+              </div>
+            )}
+            <div>
+              <input
+                type="email"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Sign In
+              </button>
+            </div>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setIsLogin(false)}
+                className="text-blue-600 hover:text-blue-800"
+              >
+                Need to register? Sign up here
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            🚗 Create Account
+          </h2>
+        </div>
+        <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" onSubmit={handleRegister}>
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <input
+            type="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <select
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="fleet_manager">Fleet Manager</option>
+              <option value="regular_user">Regular User</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Department"
+              value={formData.department}
+              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <input
+            type="tel"
+            placeholder="Phone Number"
+            value={formData.phone}
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Create Account
+          </button>
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setIsLogin(true)}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              Already have an account? Sign in
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const FleetDashboard = () => {
+  const { user, logout, isManager } = useAuth();
   const [cars, setCars] = useState([]);
   const [downtimes, setDowntimes] = useState([]);
+  const [users, setUsers] = useState([]);
   const [fleetStats, setFleetStats] = useState({});
   const [categoryStats, setCategoryStats] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAddCarModal, setShowAddCarModal] = useState(false);
   const [showAddDowntimeModal, setShowAddDowntimeModal] = useState(false);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [selectedCar, setSelectedCar] = useState(null);
 
   // Form states
@@ -21,6 +272,9 @@ const FleetDashboard = () => {
   });
   const [downtimeForm, setDowntimeForm] = useState({
     car_id: '', reason: 'maintenance', description: '', start_date: '', end_date: '', cost: ''
+  });
+  const [userForm, setUserForm] = useState({
+    name: '', email: '', password: '', role: 'regular_user', department: '', phone: ''
   });
 
   const carCategories = ['sedan', 'suv', 'truck', 'van', 'hatchback', 'coupe'];
@@ -42,6 +296,11 @@ const FleetDashboard = () => {
       setDowntimes(downtimesRes.data);
       setFleetStats(statsRes.data);
       setCategoryStats(categoriesRes.data);
+
+      if (isManager()) {
+        const usersRes = await axios.get(`${API}/users`);
+        setUsers(usersRes.data);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -81,6 +340,18 @@ const FleetDashboard = () => {
     }
   };
 
+  const handleAddUser = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API}/users`, userForm);
+      setUserForm({ name: '', email: '', password: '', role: 'regular_user', department: '', phone: '' });
+      setShowAddUserModal(false);
+      fetchData();
+    } catch (error) {
+      console.error('Error adding user:', error);
+    }
+  };
+
   const getStatusColor = (status) => {
     const colors = {
       available: 'bg-green-100 text-green-800',
@@ -104,7 +375,8 @@ const FleetDashboard = () => {
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg text-white p-8 relative overflow-hidden">
         <div className="relative z-10">
           <h1 className="text-4xl font-bold mb-4">Fleet Management System</h1>
-          <p className="text-xl opacity-90">Manage your company vehicles efficiently and track availability in real-time</p>
+          <p className="text-xl opacity-90">Welcome back, {user.name}! Manage your company vehicles efficiently.</p>
+          <p className="text-sm opacity-75 mt-2">Role: {user.role === 'fleet_manager' ? 'Fleet Manager' : 'Regular User'}</p>
         </div>
         <div className="absolute top-0 right-0 w-1/3 h-full opacity-20">
           <img src="https://images.unsplash.com/photo-1574777225753-8c02c830b525" alt="Fleet" className="w-full h-full object-cover" />
@@ -155,12 +427,14 @@ const FleetDashboard = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Fleet Vehicles</h2>
-        <button
-          onClick={() => setShowAddCarModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Add New Car
-        </button>
+        {isManager() && (
+          <button
+            onClick={() => setShowAddCarModal(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Add New Car
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -179,16 +453,18 @@ const FleetDashboard = () => {
               <p><span className="font-medium">Mileage:</span> {car.mileage.toLocaleString()} miles</p>
               <p><span className="font-medium">Category:</span> {car.category}</p>
             </div>
-            <button
-              onClick={() => {
-                setSelectedCar(car.id);
-                setDowntimeForm({ ...downtimeForm, car_id: car.id });
-                setShowAddDowntimeModal(true);
-              }}
-              className="mt-4 w-full bg-gray-100 text-gray-700 py-2 rounded hover:bg-gray-200 transition-colors"
-            >
-              Add Downtime
-            </button>
+            {isManager() && (
+              <button
+                onClick={() => {
+                  setSelectedCar(car.id);
+                  setDowntimeForm({ ...downtimeForm, car_id: car.id });
+                  setShowAddDowntimeModal(true);
+                }}
+                className="mt-4 w-full bg-gray-100 text-gray-700 py-2 rounded hover:bg-gray-200 transition-colors"
+              >
+                Add Downtime
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -199,12 +475,14 @@ const FleetDashboard = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Downtime Records</h2>
-        <button
-          onClick={() => setShowAddDowntimeModal(true)}
-          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-        >
-          Add Downtime
-        </button>
+        {isManager() && (
+          <button
+            onClick={() => setShowAddDowntimeModal(true)}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Add Downtime
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -255,6 +533,62 @@ const FleetDashboard = () => {
     </div>
   );
 
+  const UsersView = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">User Management</h2>
+        <button
+          onClick={() => setShowAddUserModal(true)}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+        >
+          Add New User
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 font-medium">{user.name}</td>
+                  <td className="px-6 py-4">{user.email}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded capitalize ${user.role === 'fleet_manager' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                      {user.role.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">{user.department || '-'}</td>
+                  <td className="px-6 py-4">{user.phone || '-'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
+  const tabs = [
+    { id: 'dashboard', name: 'Dashboard', visible: true },
+    { id: 'cars', name: 'Cars', visible: true },
+    { id: 'downtimes', name: 'Downtimes', visible: true },
+    { id: 'users', name: 'Users', visible: isManager() }
+  ].filter(tab => tab.visible);
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Navigation */}
@@ -264,11 +598,7 @@ const FleetDashboard = () => {
             <div className="flex items-center space-x-8">
               <h1 className="text-xl font-bold text-gray-800">🚗 FleetManager</h1>
               <div className="flex space-x-4">
-                {[
-                  { id: 'dashboard', name: 'Dashboard' },
-                  { id: 'cars', name: 'Cars' },
-                  { id: 'downtimes', name: 'Downtimes' }
-                ].map((tab) => (
+                {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
@@ -283,6 +613,15 @@ const FleetDashboard = () => {
                 ))}
               </div>
             </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-600">Welcome, {user.name}</span>
+              <button
+                onClick={logout}
+                className="bg-red-600 text-white px-3 py-2 rounded-md text-sm hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -292,10 +631,11 @@ const FleetDashboard = () => {
         {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'cars' && <CarsView />}
         {activeTab === 'downtimes' && <DowntimesView />}
+        {activeTab === 'users' && isManager() && <UsersView />}
       </main>
 
       {/* Add Car Modal */}
-      {showAddCarModal && (
+      {showAddCarModal && isManager() && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Add New Car</h2>
@@ -379,7 +719,7 @@ const FleetDashboard = () => {
       )}
 
       {/* Add Downtime Modal */}
-      {showAddDowntimeModal && (
+      {showAddDowntimeModal && isManager() && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Add Downtime</h2>
@@ -458,16 +798,105 @@ const FleetDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Add User Modal */}
+      {showAddUserModal && isManager() && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Add New User</h2>
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  value={userForm.name}
+                  onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                  className="border rounded px-3 py-2"
+                  required
+                />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={userForm.email}
+                  onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                  className="border rounded px-3 py-2"
+                  required
+                />
+              </div>
+              <input
+                type="password"
+                placeholder="Password"
+                value={userForm.password}
+                onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                className="w-full border rounded px-3 py-2"
+                required
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <select
+                  value={userForm.role}
+                  onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                  className="border rounded px-3 py-2"
+                >
+                  <option value="regular_user">Regular User</option>
+                  <option value="fleet_manager">Fleet Manager</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Department"
+                  value={userForm.department}
+                  onChange={(e) => setUserForm({ ...userForm, department: e.target.value })}
+                  className="border rounded px-3 py-2"
+                />
+              </div>
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                value={userForm.phone}
+                onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
+                className="w-full border rounded px-3 py-2"
+              />
+              <div className="flex space-x-4">
+                <button type="submit" className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700">
+                  Add User
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddUserModal(false)}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 function App() {
   return (
-    <div className="App">
-      <FleetDashboard />
-    </div>
+    <AuthProvider>
+      <div className="App">
+        <AuthenticatedApp />
+      </div>
+    </AuthProvider>
   );
 }
+
+const AuthenticatedApp = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  return user ? <FleetDashboard /> : <LoginForm />;
+};
 
 export default App;
