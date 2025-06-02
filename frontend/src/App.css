@@ -1,38 +1,163 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
 .App {
-    text-align: center;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
 }
 
-.App-link {
-    color: #61dafb;
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation for status badges */
+.status-badge {
+  transition: all 0.2s ease-in-out;
+}
+
+.status-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s ease-in-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Modal animations */
+.modal-backdrop {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 14px;
+  }
+  
+  .table-responsive td,
+  .table-responsive th {
+    padding: 8px 4px;
+  }
+}
+
+/* Loading states */
+.loading {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Success and error states */
+.success-state {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.error-state {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Custom button styles */
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+}
+
+/* Fleet stats cards */
+.stats-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease-in-out;
+}
+
+.stats-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Category icons */
+.category-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Hero section styling */
+.hero-gradient {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #1e293b 100%);
+}
+
+/* Status indicators */
+.status-available {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.status-in-use {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.status-downtime {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.status-maintenance {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 }

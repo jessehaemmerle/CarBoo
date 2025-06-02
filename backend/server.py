@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,10 +6,10 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 import uuid
-from datetime import datetime
-
+from datetime import datetime, date
+from enum import Enum
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -25,32 +25,207 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Enums
+class CarCategory(str, Enum):
+    SEDAN = "sedan"
+    SUV = "suv"
+    TRUCK = "truck"
+    VAN = "van"
+    HATCHBACK = "hatchback"
+    COUPE = "coupe"
 
-# Define Models
-class StatusCheck(BaseModel):
+class CarStatus(str, Enum):
+    AVAILABLE = "available"
+    IN_USE = "in_use"
+    DOWNTIME = "downtime"
+    MAINTENANCE = "maintenance"
+
+class DowntimeReason(str, Enum):
+    MAINTENANCE = "maintenance"
+    REPAIR = "repair"
+    ACCIDENT = "accident"
+    CLEANING = "cleaning"
+    INSPECTION = "inspection"
+    OTHER = "other"
+
+# Models
+class Car(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    make: str
+    model: str
+    year: int
+    license_plate: str
+    vin: str
+    mileage: int
+    category: CarCategory
+    status: CarStatus = CarStatus.AVAILABLE
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class CarCreate(BaseModel):
+    make: str
+    model: str
+    year: int
+    license_plate: str
+    vin: str
+    mileage: int
+    category: CarCategory
 
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
+class CarUpdate(BaseModel):
+    make: Optional[str] = None
+    model: Optional[str] = None
+    year: Optional[int] = None
+    license_plate: Optional[str] = None
+    vin: Optional[str] = None
+    mileage: Optional[int] = None
+    category: Optional[CarCategory] = None
+    status: Optional[CarStatus] = None
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
+class Downtime(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    car_id: str
+    reason: DowntimeReason
+    description: str
+    start_date: datetime
+    end_date: Optional[datetime] = None
+    cost: Optional[float] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
+class DowntimeCreate(BaseModel):
+    car_id: str
+    reason: DowntimeReason
+    description: str
+    start_date: datetime
+    end_date: Optional[datetime] = None
+    cost: Optional[float] = None
+
+class DowntimeUpdate(BaseModel):
+    reason: Optional[DowntimeReason] = None
+    description: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    cost: Optional[float] = None
+
+class FleetStats(BaseModel):
+    total_cars: int
+    available_cars: int
+    in_downtime: int
+    in_use: int
+    maintenance: int
+
+# Car routes
+@api_router.get("/cars", response_model=List[Car])
+async def get_cars():
+    cars = await db.cars.find().to_list(1000)
+    return [Car(**car) for car in cars]
+
+@api_router.post("/cars", response_model=Car)
+async def create_car(car_data: CarCreate):
+    car = Car(**car_data.dict())
+    await db.cars.insert_one(car.dict())
+    return car
+
+@api_router.get("/cars/{car_id}", response_model=Car)
+async def get_car(car_id: str):
+    car = await db.cars.find_one({"id": car_id})
+    if not car:
+        raise HTTPException(status_code=404, detail="Car not found")
+    return Car(**car)
+
+@api_router.put("/cars/{car_id}", response_model=Car)
+async def update_car(car_id: str, car_update: CarUpdate):
+    update_data = {k: v for k, v in car_update.dict().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No update data provided")
+    
+    result = await db.cars.update_one({"id": car_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Car not found")
+    
+    updated_car = await db.cars.find_one({"id": car_id})
+    return Car(**updated_car)
+
+@api_router.delete("/cars/{car_id}")
+async def delete_car(car_id: str):
+    result = await db.cars.delete_one({"id": car_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Car not found")
+    
+    # Also delete associated downtimes
+    await db.downtimes.delete_many({"car_id": car_id})
+    return {"message": "Car deleted successfully"}
+
+# Downtime routes
+@api_router.get("/downtimes", response_model=List[Downtime])
+async def get_downtimes():
+    downtimes = await db.downtimes.find().sort("start_date", -1).to_list(1000)
+    return [Downtime(**downtime) for downtime in downtimes]
+
+@api_router.get("/downtimes/car/{car_id}", response_model=List[Downtime])
+async def get_car_downtimes(car_id: str):
+    downtimes = await db.downtimes.find({"car_id": car_id}).sort("start_date", -1).to_list(1000)
+    return [Downtime(**downtime) for downtime in downtimes]
+
+@api_router.post("/downtimes", response_model=Downtime)
+async def create_downtime(downtime_data: DowntimeCreate):
+    # Check if car exists
+    car = await db.cars.find_one({"id": downtime_data.car_id})
+    if not car:
+        raise HTTPException(status_code=404, detail="Car not found")
+    
+    downtime = Downtime(**downtime_data.dict())
+    await db.downtimes.insert_one(downtime.dict())
+    
+    # Update car status to downtime if currently happening
+    if downtime.start_date <= datetime.utcnow() and (not downtime.end_date or downtime.end_date >= datetime.utcnow()):
+        await db.cars.update_one({"id": downtime_data.car_id}, {"$set": {"status": CarStatus.DOWNTIME}})
+    
+    return downtime
+
+@api_router.put("/downtimes/{downtime_id}", response_model=Downtime)
+async def update_downtime(downtime_id: str, downtime_update: DowntimeUpdate):
+    update_data = {k: v for k, v in downtime_update.dict().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No update data provided")
+    
+    result = await db.downtimes.update_one({"id": downtime_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Downtime not found")
+    
+    updated_downtime = await db.downtimes.find_one({"id": downtime_id})
+    return Downtime(**updated_downtime)
+
+@api_router.delete("/downtimes/{downtime_id}")
+async def delete_downtime(downtime_id: str):
+    result = await db.downtimes.delete_one({"id": downtime_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Downtime not found")
+    return {"message": "Downtime deleted successfully"}
+
+# Dashboard routes
+@api_router.get("/fleet/stats", response_model=FleetStats)
+async def get_fleet_stats():
+    total_cars = await db.cars.count_documents({})
+    available_cars = await db.cars.count_documents({"status": CarStatus.AVAILABLE})
+    in_downtime = await db.cars.count_documents({"status": CarStatus.DOWNTIME})
+    in_use = await db.cars.count_documents({"status": CarStatus.IN_USE})
+    maintenance = await db.cars.count_documents({"status": CarStatus.MAINTENANCE})
+    
+    return FleetStats(
+        total_cars=total_cars,
+        available_cars=available_cars,
+        in_downtime=in_downtime,
+        in_use=in_use,
+        maintenance=maintenance
+    )
+
+@api_router.get("/fleet/categories")
+async def get_fleet_by_category():
+    pipeline = [
+        {"$group": {"_id": "$category", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ]
+    result = await db.cars.aggregate(pipeline).to_list(100)
+    return [{"category": item["_id"], "count": item["count"]} for item in result]
 
 # Include the router in the main app
 app.include_router(api_router)
