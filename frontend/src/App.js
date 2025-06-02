@@ -506,7 +506,7 @@ const FleetDashboard = () => {
               <p><span className="font-medium">Mileage:</span> {car.mileage.toLocaleString()} miles</p>
               <p><span className="font-medium">Category:</span> {car.category}</p>
             </div>
-            {isManager() && (
+            {isManager() ? (
               <button
                 onClick={() => {
                   setSelectedCar(car.id);
@@ -516,6 +516,21 @@ const FleetDashboard = () => {
                 className="mt-4 w-full bg-gray-100 text-gray-700 py-2 rounded hover:bg-gray-200 transition-colors"
               >
                 Add Downtime
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setBookingForm({ ...bookingForm, car_id: car.id });
+                  setShowBookingModal(true);
+                }}
+                disabled={car.status !== 'available'}
+                className={`mt-4 w-full py-2 rounded transition-colors ${
+                  car.status === 'available' 
+                    ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' 
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {car.status === 'available' ? 'Book Car' : 'Not Available'}
               </button>
             )}
           </div>
