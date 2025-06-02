@@ -365,6 +365,46 @@ const FleetDashboard = () => {
     }
   };
 
+  const handleCreateBooking = async (e) => {
+    e.preventDefault();
+    try {
+      const bookingData = {
+        ...bookingForm,
+        start_date: new Date(bookingForm.start_date).toISOString(),
+        end_date: new Date(bookingForm.end_date).toISOString()
+      };
+      await axios.post(`${API}/bookings`, bookingData);
+      setBookingForm({ car_id: '', start_date: '', end_date: '', purpose: '' });
+      setShowBookingModal(false);
+      fetchData();
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      alert(error.response?.data?.detail || 'Error creating booking');
+    }
+  };
+
+  const handleApproveRejectBooking = async (bookingId, status, rejectionReason = '') => {
+    try {
+      await axios.put(`${API}/bookings/${bookingId}/approve`, {
+        status,
+        rejection_reason: rejectionReason || undefined
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Error updating booking:', error);
+      alert(error.response?.data?.detail || 'Error updating booking');
+    }
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    try {
+      await axios.delete(`${API}/bookings/${bookingId}`);
+      fetchData();
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+    }
+  };
+
   const getStatusColor = (status) => {
     const colors = {
       available: 'bg-green-100 text-green-800',
