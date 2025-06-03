@@ -1653,14 +1653,27 @@ function App() {
   return (
     <AuthProvider>
       <div className="App">
-        <AuthenticatedApp />
+        <MainApp />
       </div>
     </AuthProvider>
   );
 }
 
-const AuthenticatedApp = () => {
+const MainApp = () => {
   const { user, loading } = useAuth();
+  const [currentView, setCurrentView] = useState('landing'); // 'landing', 'login', 'register', 'dashboard'
+
+  const handleGetStarted = (action) => {
+    if (action === 'login') {
+      setCurrentView('login');
+    } else if (action === 'register') {
+      setCurrentView('register');
+    }
+  };
+
+  const handleBackToLanding = () => {
+    setCurrentView('landing');
+  };
 
   if (loading) {
     return (
@@ -1670,7 +1683,21 @@ const AuthenticatedApp = () => {
     );
   }
 
-  return user ? <FleetDashboard /> : <LoginForm />;
+  // If user is authenticated, show dashboard
+  if (user) {
+    return <FleetDashboard />;
+  }
+
+  // Show appropriate view based on current state
+  switch (currentView) {
+    case 'login':
+      return <LoginForm onBack={handleBackToLanding} />;
+    case 'register':
+      return <CompanyRegistrationForm onBack={handleBackToLanding} />;
+    case 'landing':
+    default:
+      return <LandingPage onGetStarted={handleGetStarted} />;
+  }
 };
 
 export default App;
