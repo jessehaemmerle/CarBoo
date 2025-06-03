@@ -71,10 +71,10 @@ const LandingPage = ({ onGetStarted }) => {
               <span className="logo-text">FleetManager Pro</span>
             </div>
             <div className="nav-links">
-              <a href="#features">Features</a>
-              <a href="#about">About</a>
+              <a href="#features">{t('landing.features')}</a>
+              <a href="#about">{t('landing.about')}</a>
               <button className="btn-secondary" onClick={() => onGetStarted('login')}>
-                Sign In
+                {t('landing.signIn')}
               </button>
             </div>
           </div>
