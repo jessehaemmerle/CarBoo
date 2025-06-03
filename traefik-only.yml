@@ -1,0 +1,86 @@
+# Traefik Reverse Proxy - Standalone Setup
+# Use this to set up Traefik first, then add applications as needed
+
+version: '3.8'
+
+services:
+  # Traefik Reverse Proxy
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      # Docker provider
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=traefik-network
+      
+      # Entry points
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      
+      # Dashboard
+      - --api.dashboard=true
+      - --api.insecure=false
+      
+      # SSL/TLS
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      
+      # Redirect HTTP to HTTPS
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      
+      # Logging
+      - --log.level=INFO
+      - --accesslog=true
+      
+      # Security
+      - --api.dashboard=true
+      - --ping=true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_acme:/acme.json
+      - traefik_logs:/var/log/traefik
+    networks:
+      - traefik-network
+    labels:
+      # Traefik dashboard
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${MAIN_DOMAIN}`)"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.service=api@internal"
+      
+      # Dashboard authentication (optional)
+      - "traefik.http.routers.traefik.middlewares=dashboard-auth"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_AUTH:-admin:$$2y$$10$$placeholder}"
+      
+      # Health check
+      - "traefik.http.routers.ping.rule=Host(`traefik.${MAIN_DOMAIN}`) && Path(`/ping`)"
+      - "traefik.http.routers.ping.service=ping@internal"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  traefik_acme:
+    driver: local
+  traefik_logs:
+    driver: local
+
+networks:
+  traefik-network:
+    driver: bridge
+    external: false
+
+# To use this Traefik setup:
+# 1. Create .env.traefik with MAIN_DOMAIN and ACME_EMAIL
+# 2. Run: docker-compose -f traefik-only.yml --env-file .env.traefik up -d
+# 3. Add applications that connect to the 'traefik-network'
