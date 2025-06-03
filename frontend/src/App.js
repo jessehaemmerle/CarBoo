@@ -1130,12 +1130,12 @@ const FleetDashboard = () => {
   );
 
   const tabs = [
-    { id: 'dashboard', name: 'Dashboard', visible: true },
-    { id: 'cars', name: 'Cars', visible: true },
-    { id: 'bookings', name: 'Bookings', visible: true },
-    { id: 'downtimes', name: 'Downtimes', visible: true },
-    { id: 'users', name: 'Users', visible: isManager() },
-    { id: 'company', name: 'Company', visible: isManager() }
+    { id: 'dashboard', name: t('navigation.dashboard'), visible: true },
+    { id: 'cars', name: t('navigation.cars'), visible: true },
+    { id: 'bookings', name: t('navigation.bookings'), visible: true },
+    { id: 'downtimes', name: t('navigation.downtimes'), visible: true },
+    { id: 'users', name: t('navigation.users'), visible: isManager() },
+    { id: 'company', name: t('navigation.company'), visible: isManager() }
   ].filter(tab => tab.visible);
 
   return (
