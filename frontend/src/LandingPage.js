@@ -32,8 +32,8 @@ const LandingPage = ({ onGetStarted }) => {
     },
     {
       icon: "🌐",
-      title: "Multi-Tenant SaaS",
-      description: "Isolated company data with subscription-based plans and scalable architecture."
+      title: "Free & Open Platform",
+      description: "Complete fleet management solution with no limits on vehicles, users, or features."
     }
   ];
 
