@@ -350,6 +350,16 @@ async def get_user_company(user: User) -> Company:
     return Company(**company)
 
 # Company routes
+@api_router.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring and load balancers"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "FleetManager Backend API",
+        "version": "1.0.0"
+    }
+
 @api_router.post("/companies/register", response_model=Token)
 async def register_company(registration_data: CompanyRegistration):
     """Register a new company with fleet manager"""
