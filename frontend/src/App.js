@@ -325,18 +325,11 @@ const CompanyRegistrationForm = ({ onBack }) => {
             </div>
           </div>
 
-          <div className="bg-blue-50 p-4 rounded-md">
-            <p className="text-sm text-blue-800">
-              <strong>🎉 Free Trial Includes:</strong><br/>
-              • 5 vehicles • 3 users • 14 days free • Basic reporting • Email support
-            </p>
-          </div>
-
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
           >
-            Start Free Trial
+            Create Account
           </button>
           
           <p className="text-xs text-gray-500 text-center">
