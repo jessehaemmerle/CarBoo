@@ -76,6 +76,12 @@
     "managerDepartment": "Departamento",
     "managerPassword": "Contraseña"
   },
+  "forms": {
+    "required": "Este campo es obligatorio",
+    "invalidEmail": "Por favor ingrese una dirección de correo válida",
+    "passwordsDoNotMatch": "Las contraseñas no coinciden",
+    "passwordTooShort": "La contraseña debe tener al menos 6 caracteres"
+  },
   "dashboard": {
     "welcome": "Bienvenido de nuevo,",
     "companyStats": "Estadísticas de la empresa",
