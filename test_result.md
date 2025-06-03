@@ -107,51 +107,63 @@ user_problem_statement: "Create a web app to manage a fleet of company cars, reg
 backend:
   - task: "Booking System APIs"
     implemented: true
-    working: "NA"
+    working: "passed"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented complete booking system with CRUD operations, availability checking, approval workflow, and role-based access control"
+      - working: "passed"
+        agent: "testing"
+        comment: "Booking system APIs tested and working correctly. All CRUD operations, availability checking, and approval workflow function as expected."
 
   - task: "Booking Availability Logic"
     implemented: true
-    working: "NA"
+    working: "passed"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented smart availability checking considering both downtimes and existing bookings, prevents double booking conflicts"
+      - working: "passed"
+        agent: "testing"
+        comment: "Availability logic tested and working correctly. System properly checks for conflicts with downtimes and existing bookings."
 
   - task: "Booking Approval Workflow"
     implemented: true
-    working: "NA"
+    working: "passed"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented manager approval/rejection system with reasons, booking status tracking, and proper permissions"
+      - working: "passed"
+        agent: "testing"
+        comment: "Approval workflow tested and working correctly. Managers can approve/reject bookings with reasons, and status tracking works as expected."
 
   - task: "Enhanced Booking Details"
     implemented: true
-    working: "NA"
+    working: "passed"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Booking responses include detailed car, user, and approver information for rich frontend display"
+      - working: "passed"
+        agent: "testing"
+        comment: "Enhanced booking details tested and working correctly. Responses include all necessary car, user, and approver information."
 
   - task: "User Authentication System"
     implemented: true
@@ -224,6 +236,66 @@ backend:
       - working: "passed"
         agent: "deep_testing_backend_v2"
         comment: "All dashboard endpoints require authentication and return proper statistics"
+
+  - task: "Subscription Removal - Company Registration"
+    implemented: true
+    working: "passed"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "passed"
+        agent: "testing"
+        comment: "Company registration works without subscription plans. Verified that subscription-related fields (subscription_plan, max_vehicles, max_users, trial_end_date) are not present in the response."
+
+  - task: "Subscription Removal - Car Creation"
+    implemented: true
+    working: "passed"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "passed"
+        agent: "testing"
+        comment: "Car creation works without vehicle limits. Successfully created multiple cars without hitting any limit restrictions."
+
+  - task: "Subscription Removal - User Creation"
+    implemented: true
+    working: "passed"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "passed"
+        agent: "testing"
+        comment: "User creation works without user limits. Successfully created multiple users without hitting any limit restrictions."
+
+  - task: "User Language Preference"
+    implemented: true
+    working: "passed"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "passed"
+        agent: "testing"
+        comment: "User language preference update works correctly. Successfully updated user language to both German (de) and Spanish (es)."
+
+  - task: "Subscription Removal - Company Info"
+    implemented: true
+    working: "passed"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "passed"
+        agent: "testing"
+        comment: "Company info endpoint returns data without subscription fields. Verified that subscription-related fields are not present in the response."
 
 frontend:
   - task: "Booking Interface for Users"
