@@ -569,7 +569,7 @@ const FleetDashboard = () => {
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-4xl font-bold mb-2">{company?.name || 'Fleet Management'}</h1>
-              <p className="text-xl opacity-90 mb-2">Welcome back, {user.name}!</p>
+              <p className="text-xl opacity-90 mb-2">{t('dashboard.welcome')} {user.name}!</p>
               <p className="text-sm opacity-75">
                 Role: {user.role === 'fleet_manager' ? 'Fleet Manager' : 'Regular User'} 
                 {user.department && ` • ${user.department}`}
