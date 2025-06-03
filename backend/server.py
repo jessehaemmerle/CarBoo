@@ -493,41 +493,6 @@ async def register_user(user_data: UserCreate):
         status_code=status.HTTP_410_GONE,
         detail="Direct user registration is no longer supported. Please use company registration instead."
     )
-    # Check if user already exists
-    existing_user = await db.users.find_one({"email": user_data.email})
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
-    
-    # Create new user
-    hashed_password = get_password_hash(user_data.password)
-    user = User(
-        name=user_data.name,
-        email=user_data.email,
-        role=user_data.role,
-        department=user_data.department,
-        phone=user_data.phone
-    )
-    
-    # Store user with hashed password
-    user_dict = user.dict()
-    user_dict["password_hash"] = hashed_password
-    await db.users.insert_one(user_dict)
-    
-    # Create access token
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.id}, expires_delta=access_token_expires
-    )
-    
-    return Token(
-        access_token=access_token,
-        token_type="bearer",
-        user=UserResponse(**user.dict())
-    )
-
 @api_router.post("/auth/login", response_model=Token)
 async def login_user(user_credentials: UserLogin):
     # Find user by email
@@ -539,6 +504,18 @@ async def login_user(user_credentials: UserLogin):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Get user's company
+    company = await db.companies.find_one({"id": user["company_id"]})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Check if company is active
+    if not company["is_active"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Company account is inactive"
+        )
+    
     # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
@@ -548,7 +525,8 @@ async def login_user(user_credentials: UserLogin):
     return Token(
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse(**{k: v for k, v in user.items() if k != "password_hash"})
+        user=UserResponse(**{k: v for k, v in user.items() if k != "password_hash"}),
+        company=CompanyResponse(**company)
     )
 
 @api_router.get("/auth/me", response_model=UserResponse)
@@ -558,11 +536,21 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
 # User Management routes (only for managers)
 @api_router.get("/users", response_model=List[UserResponse])
 async def get_all_users(current_manager: User = Depends(get_current_manager)):
-    users = await db.users.find().to_list(1000)
+    users = await db.users.find({"company_id": current_manager.company_id}).to_list(1000)
     return [UserResponse(**{k: v for k, v in user.items() if k != "password_hash"}) for user in users]
 
 @api_router.post("/users", response_model=UserResponse)
 async def create_user_by_manager(user_data: UserCreate, current_manager: User = Depends(get_current_manager)):
+    # Check company user limit
+    company = await get_user_company(current_manager)
+    current_user_count = await db.users.count_documents({"company_id": current_manager.company_id})
+    
+    if company.max_users > 0 and current_user_count >= company.max_users:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"User limit reached. Your plan allows {company.max_users} users."
+        )
+    
     # Check if user already exists
     existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
@@ -574,6 +562,7 @@ async def create_user_by_manager(user_data: UserCreate, current_manager: User = 
     # Create new user
     hashed_password = get_password_hash(user_data.password)
     user = User(
+        company_id=current_manager.company_id,
         name=user_data.name,
         email=user_data.email,
         role=user_data.role,
@@ -590,6 +579,23 @@ async def create_user_by_manager(user_data: UserCreate, current_manager: User = 
 
 @api_router.delete("/users/{user_id}")
 async def delete_user(user_id: str, current_manager: User = Depends(get_current_manager)):
+    # Check if user belongs to the same company
+    user_to_delete = await db.users.find_one({"id": user_id, "company_id": current_manager.company_id})
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent deleting the last fleet manager
+    if user_to_delete["role"] == UserRole.FLEET_MANAGER:
+        manager_count = await db.users.count_documents({
+            "company_id": current_manager.company_id,
+            "role": UserRole.FLEET_MANAGER
+        })
+        if manager_count <= 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot delete the last fleet manager"
+            )
+    
     result = await db.users.delete_one({"id": user_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
