@@ -9,7 +9,7 @@ import random
 import string
 
 # Get the backend URL from the frontend .env file
-BACKEND_URL = "https://2c450bf5-ffe9-49a2-ba07-d35dc10e37e9.preview.emergentagent.com"
+BACKEND_URL = "https://89b657d5-9251-48b5-ad3f-2889cdb31388.preview.emergentagent.com"
 API_URL = f"{BACKEND_URL}/api"
 
 # Set to True to enable verbose output
