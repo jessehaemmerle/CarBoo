@@ -582,23 +582,18 @@ const FleetDashboard = () => {
             )}
           </div>
           
-          {/* Subscription Info */}
-          {company && (
+          {/* Company Stats */}
+          {fleetStats && (
             <div className="mt-6 flex flex-wrap gap-4 text-sm">
               <div className="bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                Plan: {company.subscription_plan.replace('_', ' ').toUpperCase()}
+                Total Vehicles: {fleetStats.total_cars || 0}
               </div>
               <div className="bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                Vehicles: {fleetStats.total_cars || 0}/{company.max_vehicles === -1 ? '∞' : company.max_vehicles}
+                Available: {fleetStats.available_cars || 0}
               </div>
               <div className="bg-white bg-opacity-20 px-3 py-1 rounded-full">
-                Users: {users.length || 0}/{company.max_users === -1 ? '∞' : company.max_users}
+                In Use: {fleetStats.in_use || 0}
               </div>
-              {company.trial_end_date && (
-                <div className="bg-yellow-500 bg-opacity-90 px-3 py-1 rounded-full">
-                  Trial ends: {new Date(company.trial_end_date).toLocaleDateString()}
-                </div>
-              )}
             </div>
           )}
         </div>
