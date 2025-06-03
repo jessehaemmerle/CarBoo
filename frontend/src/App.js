@@ -561,20 +561,23 @@ const FleetDashboard = () => {
     return icons[category] || '🚗';
   };
 
-  const Dashboard = () => (
-    <div className="space-y-6">
-      {/* Company Info & Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg text-white p-8 relative overflow-hidden">
-        <div className="relative z-10">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">{company?.name || 'Fleet Management'}</h1>
-              <p className="text-xl opacity-90 mb-2">{t('dashboard.welcome')} {user.name}!</p>
-              <p className="text-sm opacity-75">
-                Role: {user.role === 'fleet_manager' ? 'Fleet Manager' : 'Regular User'} 
-                {user.department && ` • ${user.department}`}
-              </p>
-            </div>
+  const Dashboard = () => {
+    const { t } = useTranslation();
+    
+    return (
+      <div className="space-y-6">
+        {/* Company Info & Hero Section */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg text-white p-8 relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-4xl font-bold mb-2">{company?.name || 'Fleet Management'}</h1>
+                <p className="text-xl opacity-90 mb-2">{t('dashboard.welcome')} {user.name}!</p>
+                <p className="text-sm opacity-75">
+                  Role: {user.role === 'fleet_manager' ? t('users.fleetManager') : t('users.regularUser')} 
+                  {user.department && ` • ${user.department}`}
+                </p>
+              </div>
             {isManager() && (
               <button
                 onClick={() => setShowCompanyModal(true)}
