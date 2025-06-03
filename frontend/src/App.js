@@ -1068,86 +1068,33 @@ const FleetDashboard = () => {
         </div>
       </div>
 
-      {/* Subscription Information */}
+      {/* Fleet Statistics */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold mb-4">Subscription Details</h3>
+        <h3 className="text-lg font-semibold mb-4">Fleet Overview</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="text-center p-4 bg-blue-50 rounded-lg">
             <div className="text-2xl font-bold text-blue-600">
-              {company?.subscription_plan?.replace('_', ' ').toUpperCase()}
+              {fleetStats.total_cars || 0}
             </div>
-            <div className="text-sm text-gray-600">Current Plan</div>
+            <div className="text-sm text-gray-600">Total Vehicles</div>
           </div>
           <div className="text-center p-4 bg-green-50 rounded-lg">
             <div className="text-2xl font-bold text-green-600">
-              {fleetStats.total_cars || 0}/{company?.max_vehicles === -1 ? '∞' : company?.max_vehicles}
+              {fleetStats.available_cars || 0}
             </div>
-            <div className="text-sm text-gray-600">Vehicles Used</div>
+            <div className="text-sm text-gray-600">Available</div>
           </div>
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <div className="text-2xl font-bold text-purple-600">
-              {users.length || 0}/{company?.max_users === -1 ? '∞' : company?.max_users}
+              {users.length || 0}
             </div>
             <div className="text-sm text-gray-600">Users</div>
           </div>
           <div className="text-center p-4 bg-yellow-50 rounded-lg">
             <div className="text-2xl font-bold text-yellow-600">
-              {company?.trial_end_date ? 
-                Math.max(0, Math.ceil((new Date(company.trial_end_date) - new Date()) / (1000 * 60 * 60 * 24))) :
-                '∞'
-              }
+              {fleetStats.in_use || 0}
             </div>
-            <div className="text-sm text-gray-600">
-              {company?.trial_end_date ? 'Trial Days Left' : 'Unlimited'}
-            </div>
-          </div>
-        </div>
-        
-        {company?.trial_end_date && (
-          <div className="mt-6 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
-            <h4 className="font-medium text-yellow-800 mb-2">Trial Account</h4>
-            <p className="text-yellow-700">
-              Your trial expires on {new Date(company.trial_end_date).toLocaleDateString()}. 
-              Upgrade to continue using FleetManager Pro.
-            </p>
-            <button className="mt-2 bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors">
-              Upgrade Now
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Usage Statistics */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold mb-4">Usage Statistics</h3>
-        <div className="space-y-4">
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span>Vehicle Capacity</span>
-              <span>{fleetStats.total_cars || 0}/{company?.max_vehicles === -1 ? '∞' : company?.max_vehicles}</span>
-            </div>
-            {company?.max_vehicles > 0 && (
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full" 
-                  style={{ width: `${Math.min(100, (fleetStats.total_cars || 0) / company.max_vehicles * 100)}%` }}
-                ></div>
-              </div>
-            )}
-          </div>
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span>User Capacity</span>
-              <span>{users.length || 0}/{company?.max_users === -1 ? '∞' : company?.max_users}</span>
-            </div>
-            {company?.max_users > 0 && (
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-green-600 h-2 rounded-full" 
-                  style={{ width: `${Math.min(100, (users.length || 0) / company.max_users * 100)}%` }}
-                ></div>
-              </div>
-            )}
+            <div className="text-sm text-gray-600">In Use</div>
           </div>
         </div>
       </div>
