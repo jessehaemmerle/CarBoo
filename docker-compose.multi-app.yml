@@ -58,7 +58,7 @@ services:
 
   # Example: API Application (e.g., Node.js API)
   # api_app:
-  #   image: node:18-alpine
+  #   image: node:20-alpine
   #   container_name: api_app
   #   restart: unless-stopped
   #   networks:
