@@ -183,6 +183,7 @@ class Token(BaseModel):
 # Models
 class Car(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
     make: str
     model: str
     year: int
@@ -214,6 +215,7 @@ class CarUpdate(BaseModel):
 
 class Downtime(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
     car_id: str
     reason: DowntimeReason
     description: str
@@ -247,6 +249,7 @@ class FleetStats(BaseModel):
 # Booking Models
 class Booking(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
     car_id: str
     user_id: str
     start_date: datetime
@@ -275,6 +278,7 @@ class BookingApproval(BaseModel):
 
 class BookingResponse(BaseModel):
     id: str
+    company_id: str
     car_id: str
     user_id: str
     start_date: datetime
