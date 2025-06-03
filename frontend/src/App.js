@@ -1,6 +1,7 @@
 import React, { useState, useEffect, createContext, useContext } from "react";
 import "./App.css";
 import axios from "axios";
+import LandingPage from "./LandingPage";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -18,6 +19,7 @@ const useAuth = () => {
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +36,10 @@ const AuthProvider = ({ children }) => {
     try {
       const response = await axios.get(`${API}/auth/me`);
       setUser(response.data);
+      
+      // Fetch company info
+      const companyResponse = await axios.get(`${API}/companies/me`);
+      setCompany(companyResponse.data);
     } catch (error) {
       localStorage.removeItem('token');
       delete axios.defaults.headers.common['Authorization'];
@@ -44,23 +50,25 @@ const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await axios.post(`${API}/auth/login`, { email, password });
-      const { access_token, user: userData } = response.data;
+      const { access_token, user: userData, company: companyData } = response.data;
       localStorage.setItem('token', access_token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       setUser(userData);
+      setCompany(companyData);
       return { success: true };
     } catch (error) {
       return { success: false, error: error.response?.data?.detail || 'Login failed' };
     }
   };
 
-  const register = async (userData) => {
+  const registerCompany = async (registrationData) => {
     try {
-      const response = await axios.post(`${API}/auth/register`, userData);
-      const { access_token, user: newUser } = response.data;
+      const response = await axios.post(`${API}/companies/register`, registrationData);
+      const { access_token, user: userData, company: companyData } = response.data;
       localStorage.setItem('token', access_token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-      setUser(newUser);
+      setUser(userData);
+      setCompany(companyData);
       return { success: true };
     } catch (error) {
       return { success: false, error: error.response?.data?.detail || 'Registration failed' };
@@ -71,12 +79,22 @@ const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
+    setCompany(null);
   };
 
   const isManager = () => user?.role === 'fleet_manager';
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, isManager }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      company, 
+      login, 
+      registerCompany, 
+      logout, 
+      loading, 
+      isManager,
+      fetchCurrentUser 
+    }}>
       {children}
     </AuthContext.Provider>
   );
