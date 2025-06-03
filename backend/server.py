@@ -122,6 +122,7 @@ class User(BaseModel):
     role: UserRole
     department: Optional[str] = None
     phone: Optional[str] = None
+    language: Language = Language.ENGLISH
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
