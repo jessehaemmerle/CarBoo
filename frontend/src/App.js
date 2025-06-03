@@ -515,8 +515,11 @@ const LoginForm = ({ onBack }) => {
           ← {t('common.backToHome')}
         </button>
         <h2 className="text-center text-3xl font-extrabold text-gray-900">
-          {t('login.signIn')}
+          {t('auth.signInTitle')}
         </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          {t('auth.signInSubtitle')}
+        </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
