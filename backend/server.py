@@ -77,6 +77,11 @@ class SubscriptionPlan(str, Enum):
     PROFESSIONAL = "professional"
     ENTERPRISE = "enterprise"
 
+class Language(str, Enum):
+    ENGLISH = "en"
+    GERMAN = "de"
+    SPANISH = "es"
+
 # Company Models
 class Company(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
