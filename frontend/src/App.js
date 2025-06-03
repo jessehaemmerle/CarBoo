@@ -477,7 +477,7 @@ const CompanyRegistrationForm = ({ onBack }) => {
 };
 
 // Login Form Component
-const LoginForm = ({ onBack }) => {
+const LoginForm = ({ onBack, onSwitchToRegister }) => {
   const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
