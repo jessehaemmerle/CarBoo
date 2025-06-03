@@ -65,6 +65,12 @@ const AuthProvider = ({ children }) => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       setUser(userData);
       setCompany(companyData);
+      
+      // Set language preference if user has one
+      if (userData.language && userData.language !== i18n.language) {
+        i18n.changeLanguage(userData.language);
+      }
+      
       return { success: true };
     } catch (error) {
       return { success: false, error: error.response?.data?.detail || 'Login failed' };
