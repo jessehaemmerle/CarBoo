@@ -86,24 +86,24 @@ const LandingPage = ({ onGetStarted }) => {
         <div className="container">
           <div className="hero-content">
             <div className="hero-text">
-              <h1>
-                Manage Your Fleet
-                <span className="highlight"> Like a Pro</span>
+              <h1 className="hero-title">
+                {t('landing.title')}
               </h1>
+              <p className="hero-subtitle">
+                {t('landing.subtitle')}
+              </p>
               <p className="hero-description">
-                Complete fleet management solution for modern businesses. Track vehicles, 
-                manage bookings, schedule maintenance, and optimize your fleet operations 
-                with our powerful platform - completely free.
+                {t('landing.heroDescription')}
               </p>
               <div className="hero-buttons">
                 <button 
                   className="btn-primary large"
                   onClick={() => onGetStarted('register')}
                 >
-                  Get Started
+                  {t('landing.getStarted')}
                 </button>
                 <button className="btn-secondary large">
-                  Watch Demo
+                  {t('landing.watchDemo')}
                 </button>
               </div>
               <div className="hero-stats">
