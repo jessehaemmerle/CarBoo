@@ -543,6 +543,56 @@ async def create_user_by_manager(user_data: UserCreate, current_manager: User = 
     
     return UserResponse(**user.dict())
 
+@api_router.put("/users/{user_id}", response_model=UserResponse)
+async def update_user(user_id: str, user_data: UserUpdate, current_user: User = Depends(get_current_user)):
+    # Regular users can only update their own profile, managers can update any user in their company
+    if current_user.role == UserRole.REGULAR_USER and current_user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only update your own profile"
+        )
+    
+    # For managers, verify user belongs to their company
+    if current_user.role == UserRole.FLEET_MANAGER:
+        target_user = await db.users.find_one({"id": user_id, "company_id": current_user.company_id})
+        if not target_user:
+            raise HTTPException(status_code=404, detail="User not found")
+    else:
+        # For regular users, just verify it's their own profile
+        target_user = await db.users.find_one({"id": user_id})
+        if not target_user or target_user["id"] != current_user.id:
+            raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prepare update data
+    update_data = {}
+    if user_data.name is not None:
+        update_data["name"] = user_data.name
+    if user_data.department is not None:
+        update_data["department"] = user_data.department
+    if user_data.phone is not None:
+        update_data["phone"] = user_data.phone
+    if user_data.language is not None:
+        update_data["language"] = user_data.language
+    
+    if not update_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No valid fields provided for update"
+        )
+    
+    # Update the user
+    result = await db.users.update_one(
+        {"id": user_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Return updated user
+    updated_user = await db.users.find_one({"id": user_id})
+    return UserResponse(**{k: v for k, v in updated_user.items() if k != "password_hash"})
+
 @api_router.delete("/users/{user_id}")
 async def delete_user(user_id: str, current_manager: User = Depends(get_current_manager)):
     # Check if user belongs to the same company
