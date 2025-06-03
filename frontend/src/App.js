@@ -567,12 +567,47 @@ const FleetDashboard = () => {
 
   const Dashboard = () => (
     <div className="space-y-6">
-      {/* Hero Section */}
+      {/* Company Info & Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg text-white p-8 relative overflow-hidden">
         <div className="relative z-10">
-          <h1 className="text-4xl font-bold mb-4">Fleet Management System</h1>
-          <p className="text-xl opacity-90">Welcome back, {user.name}! Manage your company vehicles efficiently.</p>
-          <p className="text-sm opacity-75 mt-2">Role: {user.role === 'fleet_manager' ? 'Fleet Manager' : 'Regular User'}</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">{company?.name || 'Fleet Management'}</h1>
+              <p className="text-xl opacity-90 mb-2">Welcome back, {user.name}!</p>
+              <p className="text-sm opacity-75">
+                Role: {user.role === 'fleet_manager' ? 'Fleet Manager' : 'Regular User'} 
+                {user.department && ` • ${user.department}`}
+              </p>
+            </div>
+            {isManager() && (
+              <button
+                onClick={() => setShowCompanyModal(true)}
+                className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Company Settings
+              </button>
+            )}
+          </div>
+          
+          {/* Subscription Info */}
+          {company && (
+            <div className="mt-6 flex flex-wrap gap-4 text-sm">
+              <div className="bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                Plan: {company.subscription_plan.replace('_', ' ').toUpperCase()}
+              </div>
+              <div className="bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                Vehicles: {fleetStats.total_cars || 0}/{company.max_vehicles === -1 ? '∞' : company.max_vehicles}
+              </div>
+              <div className="bg-white bg-opacity-20 px-3 py-1 rounded-full">
+                Users: {users.length || 0}/{company.max_users === -1 ? '∞' : company.max_users}
+              </div>
+              {company.trial_end_date && (
+                <div className="bg-yellow-500 bg-opacity-90 px-3 py-1 rounded-full">
+                  Trial ends: {new Date(company.trial_end_date).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="absolute top-0 right-0 w-1/3 h-full opacity-20">
           <img src="https://images.unsplash.com/photo-1574777225753-8c02c830b525" alt="Fleet" className="w-full h-full object-cover" />
@@ -584,6 +619,11 @@ const FleetDashboard = () => {
         <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
           <h3 className="text-2xl font-bold text-blue-600">{fleetStats.total_cars || 0}</h3>
           <p className="text-gray-600">Total Cars</p>
+          {company && company.max_vehicles > 0 && (
+            <div className="text-xs text-gray-500 mt-1">
+              {Math.round((fleetStats.total_cars || 0) / company.max_vehicles * 100)}% of limit
+            </div>
+          )}
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
           <h3 className="text-2xl font-bold text-green-600">{fleetStats.available_cars || 0}</h3>
@@ -614,6 +654,49 @@ const FleetDashboard = () => {
               <div className="text-sm text-gray-600 capitalize">{cat.category}</div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {isManager() && (
+            <>
+              <button
+                onClick={() => setShowAddCarModal(true)}
+                className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors"
+              >
+                <div className="text-2xl mb-2">🚗</div>
+                <div className="font-medium">Add Vehicle</div>
+                <div className="text-sm text-gray-600">Register new car</div>
+              </button>
+              <button
+                onClick={() => setShowAddUserModal(true)}
+                className="p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors"
+              >
+                <div className="text-2xl mb-2">👥</div>
+                <div className="font-medium">Add User</div>
+                <div className="text-sm text-gray-600">Invite team member</div>
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => setShowBookingModal(true)}
+            className="p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors"
+          >
+            <div className="text-2xl mb-2">📅</div>
+            <div className="font-medium">Book Vehicle</div>
+            <div className="text-sm text-gray-600">Request car booking</div>
+          </button>
+          <button
+            onClick={() => setActiveTab('downtimes')}
+            className="p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors"
+          >
+            <div className="text-2xl mb-2">🔧</div>
+            <div className="font-medium">View Reports</div>
+            <div className="text-sm text-gray-600">Fleet analytics</div>
+          </button>
         </div>
       </div>
     </div>
