@@ -215,13 +215,13 @@ const CompanyRegistrationForm = ({ onBack }) => {
             onClick={onBack}
             className="mb-4 text-blue-600 hover:text-blue-800 flex items-center"
           >
-            ← Back to home
+            {t('auth.backToHome')}
           </button>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Get Started
+            {t('auth.signInTitle')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Register your company and create your fleet manager account
+            {t('auth.signInSubtitle')}
           </p>
         </div>
         <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" onSubmit={handleRegister}>
