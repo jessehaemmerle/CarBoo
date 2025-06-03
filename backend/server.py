@@ -165,6 +165,12 @@ class UserResponse(BaseModel):
     is_active: bool
     created_at: datetime
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    department: Optional[str] = None  
+    phone: Optional[str] = None
+    language: Optional[Language] = None
+
 class Token(BaseModel):
     access_token: str
     token_type: str
