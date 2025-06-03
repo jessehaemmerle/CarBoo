@@ -175,7 +175,7 @@ docker-compose -f wordpress-compose.yml up -d
 version: '3.8'
 services:
   api_app:
-    image: node:18-alpine
+    image: node:20-alpine
     container_name: my_api
     networks:
       - traefik-network
