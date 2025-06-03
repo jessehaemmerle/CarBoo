@@ -436,11 +436,7 @@ async def get_my_company(current_user: User = Depends(get_current_user)):
         stats = {
             "total_cars": total_cars,
             "total_users": total_users,
-            "total_bookings": total_bookings,
-            "usage_percentage": {
-                "vehicles": (total_cars / company.max_vehicles * 100) if company.max_vehicles > 0 else 0,
-                "users": (total_users / company.max_users * 100) if company.max_users > 0 else 0
-            }
+            "total_bookings": total_bookings
         }
         
         company_response = CompanyResponse(**company.dict())
