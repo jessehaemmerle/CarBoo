@@ -105,7 +105,18 @@
     "totalCars": "Total Cars",
     "pendingBookings": "Pending Bookings",
     "activeDowntimes": "Active Downtimes",
-    "fleetOverview": "Fleet Overview"
+    "fleetOverview": "Fleet Overview",
+    "overview": "Overview",
+    "vehicles": "Vehicles",
+    "bookings": "Bookings",
+    "users": "Users",
+    "availableVehicles": "Available Vehicles",
+    "fleetUtilization": "Fleet Utilization",
+    "vehicleCategories": "Vehicle Categories",
+    "noVehiclesYet": "No vehicles added yet",
+    "recentBookings": "Recent Bookings",
+    "noBookingsYet": "No bookings yet",
+    "comingSoon": "This feature is coming soon"
   },
   "cars": {
     "title": "Fleet Management",
