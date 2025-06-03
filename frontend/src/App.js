@@ -1164,6 +1164,7 @@ const FleetDashboard = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <LanguageSelector user={user} onLanguageChange={handleLanguageChange} />
               <span className="text-sm text-gray-600">
                 {user.name}
               </span>
@@ -1171,7 +1172,7 @@ const FleetDashboard = () => {
                 onClick={logout}
                 className="bg-red-600 text-white px-3 py-2 rounded-md text-sm hover:bg-red-700 transition-colors"
               >
-                Logout
+                {t('common.logout')}
               </button>
             </div>
           </div>
