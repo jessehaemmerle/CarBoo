@@ -1,7 +1,10 @@
 import React, { useState, useEffect, createContext, useContext } from "react";
+import { useTranslation } from 'react-i18next';
 import "./App.css";
 import axios from "axios";
 import LandingPage from "./LandingPage";
+import LanguageSelector from './LanguageSelector';
+import './i18n'; // Initialize i18n
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
