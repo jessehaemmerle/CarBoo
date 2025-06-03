@@ -584,7 +584,7 @@ const LoginForm = ({ onBack, onSwitchToRegister }) => {
                 {t('auth.dontHaveAccount')}{' '}
                 <button
                   type="button"
-                  onClick={() => window.location.href = '#register'}
+                  onClick={onSwitchToRegister}
                   className="font-medium text-blue-600 hover:text-blue-500"
                 >
                   {t('auth.signUp')}
