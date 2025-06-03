@@ -877,16 +877,6 @@ async def get_cars(current_user: User = Depends(get_current_user)):
 
 @api_router.post("/cars", response_model=Car)
 async def create_car(car_data: CarCreate, current_manager: User = Depends(get_current_manager)):
-    # Check company vehicle limit
-    company = await get_user_company(current_manager)
-    current_car_count = await db.cars.count_documents({"company_id": current_manager.company_id})
-    
-    if company.max_vehicles > 0 and current_car_count >= company.max_vehicles:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Vehicle limit reached. Your plan allows {company.max_vehicles} vehicles."
-        )
-    
     # Check for duplicate license plate within company
     existing_car = await db.cars.find_one({
         "company_id": current_manager.company_id,
