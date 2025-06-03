@@ -39,7 +39,13 @@ const AuthProvider = ({ children }) => {
   const fetchCurrentUser = async () => {
     try {
       const response = await axios.get(`${API}/auth/me`);
-      setUser(response.data);
+      const userData = response.data;
+      setUser(userData);
+      
+      // Set language preference if user has one
+      if (userData.language && userData.language !== i18n.language) {
+        i18n.changeLanguage(userData.language);
+      }
       
       // Fetch company info
       const companyResponse = await axios.get(`${API}/companies/me`);
