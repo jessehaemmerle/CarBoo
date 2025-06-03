@@ -497,7 +497,15 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Pricing Removal - Landing Page"
+    - "Pricing Removal - Navigation"
+    - "Pricing Removal - Company Registration"
+    - "Pricing Removal - Dashboard"
+    - "Multilingual Support - Implementation"
+    - "Multilingual Support - Language Selector"
+    - "Multilingual Support - Backend Integration"
+    - "Multilingual Support - Translation Coverage"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
