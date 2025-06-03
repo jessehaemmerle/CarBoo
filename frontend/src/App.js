@@ -1677,4 +1677,4 @@ const MainApp = () => {
 };
 
 // Export the App component
-export default MainApp;
+export default App;
