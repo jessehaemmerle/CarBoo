@@ -308,15 +308,6 @@ def create_company_slug(name: str) -> str:
     slug = re.sub(r'\s+', '-', slug)
     return slug.strip('-')
 
-async def get_subscription_limits(plan: SubscriptionPlan) -> dict:
-    """Get subscription plan limits"""
-    limits = {
-        SubscriptionPlan.TRIAL: {"max_vehicles": 5, "max_users": 3, "trial_days": 14},
-        SubscriptionPlan.BASIC: {"max_vehicles": 25, "max_users": 10, "trial_days": 0},
-        SubscriptionPlan.PROFESSIONAL: {"max_vehicles": 100, "max_users": 50, "trial_days": 0},
-        SubscriptionPlan.ENTERPRISE: {"max_vehicles": -1, "max_users": -1, "trial_days": 0}  # Unlimited
-    }
-    return limits.get(plan, limits[SubscriptionPlan.TRIAL])
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
     credentials_exception = HTTPException(
