@@ -3,10 +3,10 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json yarn.lock ./
 
 # Install dependencies
-RUN npm install
+RUN yarn install --frozen-lockfile
 
 # Copy application code
 COPY . .
@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["yarn", "start"]
