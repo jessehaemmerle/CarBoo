@@ -211,7 +211,6 @@ const LandingPage = ({ onGetStarted }) => {
               <h4>Product</h4>
               <ul>
                 <li><a href="#features">Features</a></li>
-                <li><a href="#pricing">Pricing</a></li>
                 <li><a href="#demo">Demo</a></li>
                 <li><a href="#api">API</a></li>
               </ul>
