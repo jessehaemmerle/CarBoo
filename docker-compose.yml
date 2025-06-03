@@ -1,59 +1,80 @@
 version: '3.8'
 
 services:
+  # MongoDB Database
   mongodb:
     image: mongo:7.0
-    container_name: fleet_mongodb
+    container_name: fleetmanager_mongodb
     restart: unless-stopped
     environment:
-      MONGO_INITDB_DATABASE: fleet_db
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-fleetmanager123}
+      MONGO_INITDB_DATABASE: fleetmanager
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
     networks:
-      - fleet_network
+      - fleetmanager_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
+  # Backend API
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
-    container_name: fleet_backend
+      dockerfile: Dockerfile.prod
+    container_name: fleetmanager_backend
     restart: unless-stopped
     environment:
-      - MONGO_URL=mongodb://mongodb:27017
-      - DB_NAME=fleet_db
-      - JWT_SECRET_KEY=your-super-secret-jwt-key-change-this-in-production
+      - MONGO_URL=mongodb://root:${MONGO_PASSWORD:-fleetmanager123}@mongodb:27017/fleetmanager?authSource=admin
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - ENVIRONMENT=production
     ports:
       - "8001:8001"
     depends_on:
-      - mongodb
-    volumes:
-      - ./backend:/app
+      mongodb:
+        condition: service_healthy
     networks:
-      - fleet_network
+      - fleetmanager_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
+  # Frontend Web App
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-    container_name: fleet_frontend
+      dockerfile: Dockerfile.prod
+      args:
+        - REACT_APP_BACKEND_URL=${BACKEND_URL:-http://localhost:8001}
+    container_name: fleetmanager_frontend
     restart: unless-stopped
-    environment:
-      - REACT_APP_BACKEND_URL=http://localhost:8001
     ports:
       - "3000:3000"
     depends_on:
-      - backend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      backend:
+        condition: service_healthy
     networks:
-      - fleet_network
+      - fleetmanager_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 volumes:
   mongodb_data:
+    driver: local
 
 networks:
-  fleet_network:
+  fleetmanager_network:
     driver: bridge
