@@ -76,6 +76,26 @@
     "managerDepartment": "Department",
     "managerPassword": "Password"
   },
+  "registration": {
+    "createAccount": "Create Account",
+    "companyInfo": "Company Information",
+    "companyName": "Company Name",
+    "companyEmail": "Company Email",
+    "companyPhone": "Company Phone",
+    "companyAddress": "Company Address",
+    "companyWebsite": "Company Website",
+    "managerInfo": "Fleet Manager Information",
+    "managerName": "Manager Name",
+    "managerEmail": "Manager Email",
+    "managerPhone": "Manager Phone",
+    "department": "Department",
+    "password": "Password"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "passwordLength": "Password must be at least 8 characters"
+  },
   "dashboard": {
     "welcome": "Welcome back,",
     "companyStats": "Company Stats",
