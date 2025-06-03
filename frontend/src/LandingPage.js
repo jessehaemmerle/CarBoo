@@ -37,41 +37,6 @@ const LandingPage = ({ onGetStarted }) => {
     }
   ];
 
-  const plans = [
-    {
-      name: "Trial",
-      price: "Free",
-      duration: "14 days",
-      features: ["5 vehicles", "3 users", "Basic reporting", "Email support"],
-      popular: false,
-      cta: "Start Free Trial"
-    },
-    {
-      name: "Basic",
-      price: "$29",
-      duration: "per month",
-      features: ["25 vehicles", "10 users", "Advanced reporting", "Priority support", "API access"],
-      popular: true,
-      cta: "Get Started"
-    },
-    {
-      name: "Professional",
-      price: "$99",
-      duration: "per month",
-      features: ["100 vehicles", "50 users", "Custom reporting", "24/7 support", "Advanced integrations"],
-      popular: false,
-      cta: "Contact Sales"
-    },
-    {
-      name: "Enterprise",
-      price: "Custom",
-      duration: "contact us",
-      features: ["Unlimited vehicles", "Unlimited users", "Custom features", "Dedicated support", "On-premise option"],
-      popular: false,
-      cta: "Contact Sales"
-    }
-  ];
-
   const testimonials = [
     {
       name: "Sarah Johnson",
