@@ -1583,6 +1583,7 @@ const FleetDashboard = () => {
 };
 
 function App() {
+  const { t, i18n } = useTranslation();
   return (
     <AuthProvider>
       <div className="App">
