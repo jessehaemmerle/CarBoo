@@ -310,6 +310,23 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+def create_company_slug(name: str) -> str:
+    """Create a unique slug from company name"""
+    import re
+    slug = re.sub(r'[^a-zA-Z0-9\s-]', '', name.lower())
+    slug = re.sub(r'\s+', '-', slug)
+    return slug.strip('-')
+
+async def get_subscription_limits(plan: SubscriptionPlan) -> dict:
+    """Get subscription plan limits"""
+    limits = {
+        SubscriptionPlan.TRIAL: {"max_vehicles": 5, "max_users": 3, "trial_days": 14},
+        SubscriptionPlan.BASIC: {"max_vehicles": 25, "max_users": 10, "trial_days": 0},
+        SubscriptionPlan.PROFESSIONAL: {"max_vehicles": 100, "max_users": 50, "trial_days": 0},
+        SubscriptionPlan.ENTERPRISE: {"max_vehicles": -1, "max_users": -1, "trial_days": 0}  # Unlimited
+    }
+    return limits.get(plan, limits[SubscriptionPlan.TRIAL])
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -336,6 +353,13 @@ async def get_current_manager(current_user: User = Depends(get_current_user)) ->
             detail="Only fleet managers can access this resource"
         )
     return current_user
+
+async def get_user_company(user: User) -> Company:
+    """Get the company for the current user"""
+    company = await db.companies.find_one({"id": user.company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return Company(**company)
 
 # Authentication routes
 @api_router.post("/auth/register", response_model=Token)
