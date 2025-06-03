@@ -1052,6 +1052,150 @@ const FleetDashboard = () => {
     </div>
   );
 
+  const CompanyView = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Company Settings</h2>
+      </div>
+
+      {/* Company Information */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold mb-4">Company Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+            <p className="text-gray-900">{company?.name}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Company Email</label>
+            <p className="text-gray-900">{company?.email}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+            <p className="text-gray-900">{company?.phone || 'Not provided'}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
+            <p className="text-gray-900">{company?.website || 'Not provided'}</p>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+            <p className="text-gray-900">{company?.address || 'Not provided'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Subscription Information */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold mb-4">Subscription Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="text-center p-4 bg-blue-50 rounded-lg">
+            <div className="text-2xl font-bold text-blue-600">
+              {company?.subscription_plan?.replace('_', ' ').toUpperCase()}
+            </div>
+            <div className="text-sm text-gray-600">Current Plan</div>
+          </div>
+          <div className="text-center p-4 bg-green-50 rounded-lg">
+            <div className="text-2xl font-bold text-green-600">
+              {fleetStats.total_cars || 0}/{company?.max_vehicles === -1 ? '∞' : company?.max_vehicles}
+            </div>
+            <div className="text-sm text-gray-600">Vehicles Used</div>
+          </div>
+          <div className="text-center p-4 bg-purple-50 rounded-lg">
+            <div className="text-2xl font-bold text-purple-600">
+              {users.length || 0}/{company?.max_users === -1 ? '∞' : company?.max_users}
+            </div>
+            <div className="text-sm text-gray-600">Users</div>
+          </div>
+          <div className="text-center p-4 bg-yellow-50 rounded-lg">
+            <div className="text-2xl font-bold text-yellow-600">
+              {company?.trial_end_date ? 
+                Math.max(0, Math.ceil((new Date(company.trial_end_date) - new Date()) / (1000 * 60 * 60 * 24))) :
+                '∞'
+              }
+            </div>
+            <div className="text-sm text-gray-600">
+              {company?.trial_end_date ? 'Trial Days Left' : 'Unlimited'}
+            </div>
+          </div>
+        </div>
+        
+        {company?.trial_end_date && (
+          <div className="mt-6 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
+            <h4 className="font-medium text-yellow-800 mb-2">Trial Account</h4>
+            <p className="text-yellow-700">
+              Your trial expires on {new Date(company.trial_end_date).toLocaleDateString()}. 
+              Upgrade to continue using FleetManager Pro.
+            </p>
+            <button className="mt-2 bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors">
+              Upgrade Now
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Usage Statistics */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold mb-4">Usage Statistics</h3>
+        <div className="space-y-4">
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span>Vehicle Capacity</span>
+              <span>{fleetStats.total_cars || 0}/{company?.max_vehicles === -1 ? '∞' : company?.max_vehicles}</span>
+            </div>
+            {company?.max_vehicles > 0 && (
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full" 
+                  style={{ width: `${Math.min(100, (fleetStats.total_cars || 0) / company.max_vehicles * 100)}%` }}
+                ></div>
+              </div>
+            )}
+          </div>
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span>User Capacity</span>
+              <span>{users.length || 0}/{company?.max_users === -1 ? '∞' : company?.max_users}</span>
+            </div>
+            {company?.max_users > 0 && (
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-green-600 h-2 rounded-full" 
+                  style={{ width: `${Math.min(100, (users.length || 0) / company.max_users * 100)}%` }}
+                ></div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button 
+            onClick={() => setShowCompanyModal(true)}
+            className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors"
+          >
+            <div className="text-2xl mb-2">✏️</div>
+            <div className="font-medium">Edit Company Info</div>
+            <div className="text-sm text-gray-600">Update company details</div>
+          </button>
+          <button className="p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors">
+            <div className="text-2xl mb-2">📊</div>
+            <div className="font-medium">Export Data</div>
+            <div className="text-sm text-gray-600">Download reports</div>
+          </button>
+          <button className="p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors">
+            <div className="text-2xl mb-2">📞</div>
+            <div className="font-medium">Contact Support</div>
+            <div className="text-sm text-gray-600">Get help</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', visible: true },
     { id: 'cars', name: 'Cars', visible: true },
