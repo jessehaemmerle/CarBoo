@@ -12,6 +12,8 @@
     "back": "Zurück",
     "next": "Weiter",
     "loading": "Laden...",
+    "processing": "Verarbeitung...",
+    "pleaseWait": "Bitte warten...",
     "error": "Fehler",
     "success": "Erfolg",
     "name": "Name",
@@ -23,7 +25,8 @@
     "password": "Passwort",
     "confirmPassword": "Passwort bestätigen",
     "search": "Suchen",
-    "filter": "Filter"
+    "filter": "Filter",
+    "backToHome": "← Zurück zur Startseite"
   },
   "navigation": {
     "dashboard": "Dashboard",
