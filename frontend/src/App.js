@@ -1063,12 +1063,13 @@ const FleetDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Navigation */}
       <nav className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-bold text-gray-800">🚗 FleetManager</h1>
+              <h1 className="text-xl font-bold text-gray-800">
+                🚗 {company?.name || 'FleetManager Pro'}
+              </h1>
               <div className="flex space-x-4">
                 {tabs.map((tab) => (
                   <button
@@ -1086,7 +1087,9 @@ const FleetDashboard = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {user.name}</span>
+              <span className="text-sm text-gray-600">
+                {user.name} • {company?.subscription_plan?.replace('_', ' ')}
+              </span>
               <button
                 onClick={logout}
                 className="bg-red-600 text-white px-3 py-2 rounded-md text-sm hover:bg-red-700 transition-colors"
@@ -1105,6 +1108,7 @@ const FleetDashboard = () => {
         {activeTab === 'bookings' && <BookingsView />}
         {activeTab === 'downtimes' && <DowntimesView />}
         {activeTab === 'users' && isManager() && <UsersView />}
+        {activeTab === 'company' && isManager() && <CompanyView />}
       </main>
 
       {/* Add Car Modal */}
