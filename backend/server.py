@@ -893,18 +893,39 @@ async def check_car_availability_endpoint(car_id: str, start_date: datetime, end
 # Car routes
 @api_router.get("/cars", response_model=List[Car])
 async def get_cars(current_user: User = Depends(get_current_user)):
-    cars = await db.cars.find().to_list(1000)
+    cars = await db.cars.find({"company_id": current_user.company_id}).to_list(1000)
     return [Car(**car) for car in cars]
 
 @api_router.post("/cars", response_model=Car)
 async def create_car(car_data: CarCreate, current_manager: User = Depends(get_current_manager)):
-    car = Car(**car_data.dict())
+    # Check company vehicle limit
+    company = await get_user_company(current_manager)
+    current_car_count = await db.cars.count_documents({"company_id": current_manager.company_id})
+    
+    if company.max_vehicles > 0 and current_car_count >= company.max_vehicles:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Vehicle limit reached. Your plan allows {company.max_vehicles} vehicles."
+        )
+    
+    # Check for duplicate license plate within company
+    existing_car = await db.cars.find_one({
+        "company_id": current_manager.company_id,
+        "license_plate": car_data.license_plate
+    })
+    if existing_car:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="License plate already exists in your fleet"
+        )
+    
+    car = Car(company_id=current_manager.company_id, **car_data.dict())
     await db.cars.insert_one(car.dict())
     return car
 
 @api_router.get("/cars/{car_id}", response_model=Car)
 async def get_car(car_id: str, current_user: User = Depends(get_current_user)):
-    car = await db.cars.find_one({"id": car_id})
+    car = await db.cars.find_one({"id": car_id, "company_id": current_user.company_id})
     if not car:
         raise HTTPException(status_code=404, detail="Car not found")
     return Car(**car)
@@ -915,21 +936,38 @@ async def update_car(car_id: str, car_update: CarUpdate, current_manager: User =
     if not update_data:
         raise HTTPException(status_code=400, detail="No update data provided")
     
-    result = await db.cars.update_one({"id": car_id}, {"$set": update_data})
+    # Check for duplicate license plate if updating license plate
+    if "license_plate" in update_data:
+        existing_car = await db.cars.find_one({
+            "company_id": current_manager.company_id,
+            "license_plate": update_data["license_plate"],
+            "id": {"$ne": car_id}
+        })
+        if existing_car:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="License plate already exists in your fleet"
+            )
+    
+    result = await db.cars.update_one(
+        {"id": car_id, "company_id": current_manager.company_id}, 
+        {"$set": update_data}
+    )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Car not found")
     
-    updated_car = await db.cars.find_one({"id": car_id})
+    updated_car = await db.cars.find_one({"id": car_id, "company_id": current_manager.company_id})
     return Car(**updated_car)
 
 @api_router.delete("/cars/{car_id}")
 async def delete_car(car_id: str, current_manager: User = Depends(get_current_manager)):
-    result = await db.cars.delete_one({"id": car_id})
+    result = await db.cars.delete_one({"id": car_id, "company_id": current_manager.company_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Car not found")
     
-    # Also delete associated downtimes
-    await db.downtimes.delete_many({"car_id": car_id})
+    # Also delete associated downtimes and bookings
+    await db.downtimes.delete_many({"car_id": car_id, "company_id": current_manager.company_id})
+    await db.bookings.delete_many({"car_id": car_id, "company_id": current_manager.company_id})
     return {"message": "Car deleted successfully"}
 
 # Downtime routes
