@@ -76,6 +76,12 @@
     "managerDepartment": "Abteilung",
     "managerPassword": "Passwort"
   },
+  "forms": {
+    "required": "Dieses Feld ist erforderlich",
+    "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "passwordsDoNotMatch": "Passwörter stimmen nicht überein",
+    "passwordTooShort": "Passwort muss mindestens 6 Zeichen lang sein"
+  },
   "dashboard": {
     "welcome": "Willkommen zurück,",
     "companyStats": "Unternehmensstatistiken",
