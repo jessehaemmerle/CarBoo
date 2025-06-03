@@ -764,6 +764,7 @@ async def create_booking(booking_data: BookingCreate, current_user: User = Depen
     
     # Create booking
     booking = Booking(
+        company_id=current_user.company_id,
         car_id=booking_data.car_id,
         user_id=current_user.id,
         start_date=booking_data.start_date,
