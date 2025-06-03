@@ -181,17 +181,17 @@ const LandingPage = ({ onGetStarted }) => {
       <section className="cta">
         <div className="container">
           <div className="cta-content">
-            <h2>Ready to Transform Your Fleet Management?</h2>
-            <p>Join hundreds of companies already using FleetManager Pro to optimize their operations</p>
+            <h2>{t('landing.readyToTransform')}</h2>
+            <p>{t('landing.joinCompanies')}</p>
             <div className="cta-buttons">
               <button 
                 className="btn-primary large"
                 onClick={() => onGetStarted('register')}
               >
-                Get Started
+                {t('landing.getStarted')}
               </button>
               <button className="btn-secondary large">
-                Schedule Demo
+                {t('landing.scheduleDemo')}
               </button>
             </div>
           </div>
