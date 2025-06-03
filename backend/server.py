@@ -77,9 +77,58 @@ class SubscriptionPlan(str, Enum):
     PROFESSIONAL = "professional"
     ENTERPRISE = "enterprise"
 
+# Company Models
+class Company(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    slug: str
+    email: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    website: Optional[str] = None
+    subscription_plan: SubscriptionPlan = SubscriptionPlan.TRIAL
+    max_vehicles: int = 5  # Based on subscription plan
+    max_users: int = 3    # Based on subscription plan
+    is_active: bool = True
+    trial_end_date: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    settings: Optional[dict] = {}
+
+class CompanyCreate(BaseModel):
+    name: str
+    email: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    website: Optional[str] = None
+
+class CompanyUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    website: Optional[str] = None
+    settings: Optional[dict] = None
+
+class CompanyResponse(BaseModel):
+    id: str
+    name: str
+    slug: str
+    email: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    website: Optional[str] = None
+    subscription_plan: SubscriptionPlan
+    max_vehicles: int
+    max_users: int
+    is_active: bool
+    trial_end_date: Optional[datetime] = None
+    created_at: datetime
+    stats: Optional[dict] = None
+
 # Authentication Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
     name: str
     email: EmailStr
     role: UserRole
@@ -96,12 +145,27 @@ class UserCreate(BaseModel):
     department: Optional[str] = None
     phone: Optional[str] = None
 
+class CompanyRegistration(BaseModel):
+    # Company info
+    company_name: str
+    company_email: str
+    company_phone: Optional[str] = None
+    company_address: Optional[str] = None
+    company_website: Optional[str] = None
+    # Fleet Manager info
+    manager_name: str
+    manager_email: EmailStr
+    manager_password: str
+    manager_phone: Optional[str] = None
+    manager_department: Optional[str] = None
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
 class UserResponse(BaseModel):
     id: str
+    company_id: str
     name: str
     email: EmailStr
     role: UserRole
@@ -114,6 +178,7 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
+    company: CompanyResponse
 
 # Models
 class Car(BaseModel):
