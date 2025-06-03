@@ -186,7 +186,7 @@ const LandingPage = ({ onGetStarted }) => {
                 className="btn-primary large"
                 onClick={() => onGetStarted('register')}
               >
-                Start Your Free Trial
+                Get Started
               </button>
               <button className="btn-secondary large">
                 Schedule Demo
