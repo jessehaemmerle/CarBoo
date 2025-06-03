@@ -149,44 +149,6 @@ const LandingPage = ({ onGetStarted }) => {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="pricing">
-        <div className="container">
-          <div className="section-header">
-            <h2>Choose Your Plan</h2>
-            <p>Flexible pricing that grows with your business</p>
-          </div>
-          <div className="pricing-grid">
-            {plans.map((plan, index) => (
-              <div key={index} className={`pricing-card ${plan.popular ? 'popular' : ''}`}>
-                {plan.popular && <div className="popular-badge">Most Popular</div>}
-                <div className="plan-header">
-                  <h3>{plan.name}</h3>
-                  <div className="price">
-                    <span className="price-amount">{plan.price}</span>
-                    <span className="price-duration">/{plan.duration}</span>
-                  </div>
-                </div>
-                <ul className="plan-features">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx}>
-                      <span className="check">✓</span>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <button 
-                  className={`btn ${plan.popular ? 'btn-primary' : 'btn-secondary'} full-width`}
-                  onClick={() => onGetStarted('register')}
-                >
-                  {plan.cta}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Testimonials Section */}
       <section className="testimonials">
         <div className="container">
