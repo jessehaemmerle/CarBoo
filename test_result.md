@@ -298,6 +298,102 @@ backend:
         comment: "Company info endpoint returns data without subscription fields. Verified that subscription-related fields are not present in the response."
 
 frontend:
+  - task: "Pricing Removal - Landing Page"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/LandingPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Removed entire pricing section with 4 subscription plans from landing page. Changed 'Start Free Trial' to 'Get Started' and updated description to mention 'completely free'."
+
+  - task: "Pricing Removal - Navigation"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/Navigation.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Removed 'Pricing' link from header and footer navigation. Removed subscription plan display next to user name in navigation bar."
+
+  - task: "Pricing Removal - Company Registration"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/Auth/Register.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Removed 'Free Trial' messaging and trial features box from company registration. Changed button to 'Create Account'."
+
+  - task: "Pricing Removal - Dashboard"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/Dashboard/Dashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Removed subscription plan displays, usage percentages, trial end dates, and limits from dashboard. Simplified to show only fleet overview without subscription limits."
+
+  - task: "Multilingual Support - Implementation"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/i18n.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Installed react-i18next, i18next, i18next-browser-languagedetector. Created comprehensive translation files in /src/locales/ with 100+ translation keys for English (default), German, and Spanish."
+
+  - task: "Multilingual Support - Language Selector"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/LanguageSelector.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added dropdown component in navigation with flag icons for language selection (English, German, Spanish)."
+
+  - task: "Multilingual Support - Backend Integration"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/contexts/AuthContext.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Language preference stored in user profile, updated via PUT /api/users/{user_id}. User's language preference automatically loads on login/registration."
+
+  - task: "Multilingual Support - Translation Coverage"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/locales/"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added translations for landing page, authentication forms, dashboard, navigation, and common elements like buttons, labels, and error messages."
+
   - task: "Booking Interface for Users"
     implemented: true
     working: "NA"
