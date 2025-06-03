@@ -86,47 +86,30 @@ class Language(str, Enum):
 class Company(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
-    slug: str
-    email: str
+    slug: str  # URL-friendly company identifier
+    email: EmailStr
     phone: Optional[str] = None
     address: Optional[str] = None
     website: Optional[str] = None
-    subscription_plan: SubscriptionPlan = SubscriptionPlan.TRIAL
-    max_vehicles: int = 5  # Based on subscription plan
-    max_users: int = 3    # Based on subscription plan
     is_active: bool = True
-    trial_end_date: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    settings: Optional[dict] = {}
-
-class CompanyCreate(BaseModel):
-    name: str
-    email: str
-    phone: Optional[str] = None
-    address: Optional[str] = None
-    website: Optional[str] = None
 
 class CompanyUpdate(BaseModel):
     name: Optional[str] = None
-    email: Optional[str] = None
+    email: Optional[EmailStr] = None
     phone: Optional[str] = None
     address: Optional[str] = None
     website: Optional[str] = None
-    settings: Optional[dict] = None
 
 class CompanyResponse(BaseModel):
     id: str
     name: str
     slug: str
-    email: str
+    email: EmailStr
     phone: Optional[str] = None
     address: Optional[str] = None
     website: Optional[str] = None
-    subscription_plan: SubscriptionPlan
-    max_vehicles: int
-    max_users: int
     is_active: bool
-    trial_end_date: Optional[datetime] = None
     created_at: datetime
     stats: Optional[dict] = None
 
