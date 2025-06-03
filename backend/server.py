@@ -520,16 +520,6 @@ async def get_all_users(current_manager: User = Depends(get_current_manager)):
 
 @api_router.post("/users", response_model=UserResponse)
 async def create_user_by_manager(user_data: UserCreate, current_manager: User = Depends(get_current_manager)):
-    # Check company user limit
-    company = await get_user_company(current_manager)
-    current_user_count = await db.users.count_documents({"company_id": current_manager.company_id})
-    
-    if company.max_users > 0 and current_user_count >= company.max_users:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"User limit reached. Your plan allows {company.max_users} users."
-        )
-    
     # Check if user already exists
     existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
