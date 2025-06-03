@@ -12,6 +12,8 @@
     "back": "Back",
     "next": "Next",
     "loading": "Loading...",
+    "processing": "Processing...",
+    "pleaseWait": "Please wait...",
     "error": "Error",
     "success": "Success",
     "name": "Name",
@@ -23,7 +25,8 @@
     "password": "Password",
     "confirmPassword": "Confirm Password",
     "search": "Search",
-    "filter": "Filter"
+    "filter": "Filter",
+    "backToHome": "← Back to home"
   },
   "navigation": {
     "dashboard": "Dashboard",
