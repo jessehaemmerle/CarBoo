@@ -1020,7 +1020,10 @@ const MainApp = () => {
     case 'dashboard':
       return <FleetDashboard />;
     case 'login':
-      return <LoginForm onBack={handleBackToLanding} />;
+      return <LoginForm 
+        onBack={handleBackToLanding} 
+        onSwitchToRegister={() => setCurrentView('register')}
+      />;
     case 'register':
       return <CompanyRegistrationForm onBack={handleBackToLanding} />;
     case 'landing':
