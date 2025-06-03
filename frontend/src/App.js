@@ -100,15 +100,11 @@ const AuthProvider = ({ children }) => {
   );
 };
 
-const LoginForm = () => {
+const LoginForm = ({ onBack }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    name: '', email: '', password: '', role: 'fleet_manager', department: '', phone: ''
-  });
-  const { login, register } = useAuth();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -119,80 +115,110 @@ const LoginForm = () => {
     }
   };
 
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <button
+            onClick={onBack}
+            className="mb-4 text-blue-600 hover:text-blue-800 flex items-center"
+          >
+            ← Back to home
+          </button>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Sign in to your account
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Access your fleet management dashboard
+          </p>
+        </div>
+        <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" onSubmit={handleLogin}>
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
+          <div>
+            <input
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Sign In
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const CompanyRegistrationForm = ({ onBack }) => {
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    // Company info
+    company_name: '',
+    company_email: '',
+    company_phone: '',
+    company_address: '',
+    company_website: '',
+    // Manager info
+    manager_name: '',
+    manager_email: '',
+    manager_password: '',
+    manager_phone: '',
+    manager_department: ''
+  });
+  const { registerCompany } = useAuth();
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
-    const result = await register(formData);
+    const result = await registerCompany(formData);
     if (!result.success) {
       setError(result.error);
     }
   };
 
-  if (isLogin) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              🚗 Fleet Manager Login
-            </h2>
-          </div>
-          <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" onSubmit={handleLogin}>
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {error}
-              </div>
-            )}
-            <div>
-              <input
-                type="email"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Sign In
-              </button>
-            </div>
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => setIsLogin(false)}
-                className="text-blue-600 hover:text-blue-800"
-              >
-                Need to register? Sign up here
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  }
+  const handleChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12">
+      <div className="max-w-2xl w-full space-y-8">
         <div>
+          <button
+            onClick={onBack}
+            className="mb-4 text-blue-600 hover:text-blue-800 flex items-center"
+          >
+            ← Back to home
+          </button>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            🚗 Create Account
+            Start Your Free Trial
           </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Register your company and create your fleet manager account
+          </p>
         </div>
         <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" onSubmit={handleRegister}>
           {error && (
@@ -200,71 +226,122 @@ const LoginForm = () => {
               {error}
             </div>
           )}
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+          
+          {/* Company Information */}
+          <div className="border-b border-gray-200 pb-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Company Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <input
+                  type="text"
+                  placeholder="Company Name *"
+                  value={formData.company_name}
+                  onChange={(e) => handleChange('company_name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <input
+                type="email"
+                placeholder="Company Email *"
+                value={formData.company_email}
+                onChange={(e) => handleChange('company_email', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <input
+                type="tel"
+                placeholder="Company Phone"
+                value={formData.company_phone}
+                onChange={(e) => handleChange('company_phone', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="md:col-span-2">
+                <input
+                  type="text"
+                  placeholder="Company Address"
+                  value={formData.company_address}
+                  onChange={(e) => handleChange('company_address', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <input
+                  type="url"
+                  placeholder="Company Website"
+                  value={formData.company_website}
+                  onChange={(e) => handleChange('company_website', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
           </div>
-          <input
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <select
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="fleet_manager">Fleet Manager</option>
-              <option value="regular_user">Regular User</option>
-            </select>
-            <input
-              type="text"
-              placeholder="Department"
-              value={formData.department}
-              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+
+          {/* Fleet Manager Information */}
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Fleet Manager Account</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="Manager Full Name *"
+                value={formData.manager_name}
+                onChange={(e) => handleChange('manager_name', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <input
+                type="email"
+                placeholder="Manager Email *"
+                value={formData.manager_email}
+                onChange={(e) => handleChange('manager_email', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <div className="md:col-span-2">
+                <input
+                  type="password"
+                  placeholder="Password *"
+                  value={formData.manager_password}
+                  onChange={(e) => handleChange('manager_password', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  minLength="6"
+                />
+              </div>
+              <input
+                type="tel"
+                placeholder="Manager Phone"
+                value={formData.manager_phone}
+                onChange={(e) => handleChange('manager_phone', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <input
+                type="text"
+                placeholder="Department"
+                value={formData.manager_department}
+                onChange={(e) => handleChange('manager_department', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
-          <input
-            type="tel"
-            placeholder="Phone Number"
-            value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+
+          <div className="bg-blue-50 p-4 rounded-md">
+            <p className="text-sm text-blue-800">
+              <strong>🎉 Free Trial Includes:</strong><br/>
+              • 5 vehicles • 3 users • 14 days free • Basic reporting • Email support
+            </p>
+          </div>
+
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
           >
-            Create Account
+            Start Free Trial
           </button>
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(true)}
-              className="text-blue-600 hover:text-blue-800"
-            >
-              Already have an account? Sign in
-            </button>
-          </div>
+          
+          <p className="text-xs text-gray-500 text-center">
+            By registering, you agree to our Terms of Service and Privacy Policy
+          </p>
         </form>
       </div>
     </div>
