@@ -1229,7 +1229,6 @@ const FleetDashboard = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <LanguageSelector user={user} onLanguageChange={handleLanguageChange} />
               <span className="text-sm text-gray-600">
                 {user.name}
               </span>
