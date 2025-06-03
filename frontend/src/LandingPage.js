@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import "./LandingPage.css";
+import { useTranslation } from 'react-i18next';
 
 const LandingPage = ({ onGetStarted }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('features');
 
   const features = [
