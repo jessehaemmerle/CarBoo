@@ -71,6 +71,12 @@ class BookingStatus(str, Enum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
+class SubscriptionPlan(str, Enum):
+    TRIAL = "trial"
+    BASIC = "basic"
+    PROFESSIONAL = "professional"
+    ENTERPRISE = "enterprise"
+
 # Authentication Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
