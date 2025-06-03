@@ -104,6 +104,7 @@ const AuthProvider = ({ children }) => {
 };
 
 const LoginForm = ({ onBack }) => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
