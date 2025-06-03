@@ -749,5 +749,229 @@ def run_auth_tests():
     print("\n🏁 All authentication and authorization tests completed successfully!\n")
     return True
 
+# Test Company Registration without Subscription Plans
+def test_company_registration_without_subscription():
+    print_test_header("Company Registration without Subscription Plans")
+    
+    # Create unique company data
+    timestamp = int(time.time())
+    company_data = {
+        "company_name": f"Test Company {timestamp}",
+        "company_email": f"test{timestamp}@example.com",
+        "company_phone": "123-456-7890",
+        "company_address": "123 Test St",
+        "company_website": "https://testcompany.com",
+        "manager_name": "Test Manager",
+        "manager_email": f"manager{timestamp}@example.com",
+        "manager_password": "password123",
+        "manager_phone": "123-456-7890",
+        "manager_department": "Management"
+    }
+    
+    response = requests.post(f"{API_URL}/companies/register", json=company_data)
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        print("❌ Company registration failed")
+        return None
+    
+    token_data = response.json()
+    
+    # Check that company data doesn't include subscription fields
+    company = token_data["company"]
+    subscription_fields = ["subscription_plan", "max_vehicles", "max_users", "trial_end_date"]
+    
+    for field in subscription_fields:
+        if field in company:
+            print(f"❌ Response still includes subscription field: {field}")
+            return None
+    
+    print("✅ Company registration successful without subscription plan fields")
+    return token_data["access_token"]
+
+# Test Car Creation without Vehicle Limits
+def test_car_creation_without_limits(token, num_cars=5):
+    print_test_header(f"Car Creation without Vehicle Limits (creating {num_cars} cars)")
+    
+    headers = {"Authorization": f"Bearer {token}"}
+    car_ids = []
+    
+    for i in range(num_cars):
+        # Create unique car data
+        timestamp = int(time.time()) + i
+        car_data = {
+            "make": f"Test Make {i}",
+            "model": f"Test Model {i}",
+            "year": 2022 + i % 3,
+            "license_plate": f"TEST-{timestamp}",
+            "vin": f"VIN{timestamp}",
+            "mileage": 10000 + i * 1000,
+            "category": "sedan"
+        }
+        
+        response = requests.post(f"{API_URL}/cars", json=car_data, headers=headers)
+        
+        if not assert_status_code(response, 200):
+            print(f"❌ Failed to create car {i+1}")
+            return None
+        
+        car_ids.append(response.json()["id"])
+        print(f"✅ Car {i+1} created successfully")
+    
+    print(f"✅ Successfully created {num_cars} cars without hitting any vehicle limits")
+    
+    # Clean up - delete the cars
+    for car_id in car_ids:
+        requests.delete(f"{API_URL}/cars/{car_id}", headers=headers)
+    
+    return True
+
+# Test User Creation without User Limits
+def test_user_creation_without_limits(token, num_users=5):
+    print_test_header(f"User Creation without User Limits (creating {num_users} users)")
+    
+    headers = {"Authorization": f"Bearer {token}"}
+    user_ids = []
+    
+    for i in range(num_users):
+        # Create unique user data
+        timestamp = int(time.time()) + i
+        user_data = {
+            "name": f"Test User {i}",
+            "email": f"user{timestamp}@example.com",
+            "password": "password123",
+            "role": "regular_user",
+            "department": f"Department {i}",
+            "phone": f"123-456-{7890 + i}",
+            "language": "en"
+        }
+        
+        response = requests.post(f"{API_URL}/users", json=user_data, headers=headers)
+        
+        if not assert_status_code(response, 200):
+            print(f"❌ Failed to create user {i+1}")
+            return None
+        
+        user_ids.append(response.json()["id"])
+        print(f"✅ User {i+1} created successfully")
+    
+    print(f"✅ Successfully created {num_users} users without hitting any user limits")
+    
+    # Return the last user ID for the update test
+    return user_ids[-1] if user_ids else None
+
+# Test User Update with Language Preference
+def test_user_update_with_language(token, user_id):
+    print_test_header("User Update with Language Preference")
+    
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    # Test updating to German
+    update_data = {
+        "name": "Updated User Name",
+        "department": "Updated Department",
+        "phone": "987-654-3210",
+        "language": "de"
+    }
+    
+    response = requests.put(f"{API_URL}/users/{user_id}", json=update_data, headers=headers)
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        print("❌ User update failed")
+        return False
+    
+    user_data = response.json()
+    
+    # Verify language was updated correctly
+    if not assert_field_equals(user_data, "language", "de"):
+        return False
+    
+    # Test updating to Spanish
+    update_data = {
+        "language": "es"
+    }
+    
+    response = requests.put(f"{API_URL}/users/{user_id}", json=update_data, headers=headers)
+    
+    if not assert_status_code(response, 200):
+        print("❌ User update failed")
+        return False
+    
+    user_data = response.json()
+    
+    # Verify language was updated correctly
+    if not assert_field_equals(user_data, "language", "es"):
+        return False
+    
+    print("✅ User language preference update successful")
+    return True
+
+# Test Company Info without Subscription Fields
+def test_company_info_without_subscription(token):
+    print_test_header("Company Info without Subscription Fields")
+    
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    response = requests.get(f"{API_URL}/companies/me", headers=headers)
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        print("❌ Company info retrieval failed")
+        return False
+    
+    company_data = response.json()
+    
+    # Check that company data doesn't include subscription fields
+    subscription_fields = ["subscription_plan", "max_vehicles", "max_users", "trial_end_date"]
+    
+    for field in subscription_fields:
+        if field in company_data:
+            print(f"❌ Response still includes subscription field: {field}")
+            return False
+    
+    print("✅ Company info response correctly excludes subscription fields")
+    return True
+
+def run_subscription_removal_tests():
+    print("\n🚀 Starting Tests for Subscription/Pricing Logic Removal\n")
+    
+    # Test company registration without subscription plans
+    token = test_company_registration_without_subscription()
+    if not token:
+        print("❌ Company registration test failed")
+        return False
+    
+    # Test car creation without vehicle limits
+    car_test = test_car_creation_without_limits(token)
+    if not car_test:
+        print("❌ Car creation test failed")
+        return False
+    
+    # Test user creation without user limits
+    user_id = test_user_creation_without_limits(token)
+    if not user_id:
+        print("❌ User creation test failed")
+        return False
+    
+    # Test user update with language preference
+    user_update = test_user_update_with_language(token, user_id)
+    if not user_update:
+        print("❌ User update test failed")
+        return False
+    
+    # Test company info without subscription fields
+    company_info = test_company_info_without_subscription(token)
+    if not company_info:
+        print("❌ Company info test failed")
+        return False
+    
+    print("\n🏁 All subscription removal tests completed successfully!\n")
+    return True
+
 if __name__ == "__main__":
-    run_auth_tests()
+    # Uncomment to run authentication tests
+    # run_auth_tests()
+    
+    # Run subscription removal tests
+    run_subscription_removal_tests()
