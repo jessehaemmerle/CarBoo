@@ -1606,6 +1606,29 @@ const MainApp = () => {
     }
   };
 
+  const handleLanguageChange = async (langCode) => {
+    try {
+      if (user?.id) {
+        const response = await fetch(`${API}/users/${user.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ language: langCode })
+        });
+
+        if (response.ok) {
+          console.log('Language preference updated successfully');
+        } else {
+          console.error('Failed to update language preference');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating language preference:', error);
+    }
+  };
+
   const handleBackToLanding = () => {
     setCurrentView('landing');
   };
