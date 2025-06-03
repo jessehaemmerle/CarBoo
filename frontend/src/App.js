@@ -1057,7 +1057,8 @@ const FleetDashboard = () => {
     { id: 'cars', name: 'Cars', visible: true },
     { id: 'bookings', name: 'Bookings', visible: true },
     { id: 'downtimes', name: 'Downtimes', visible: true },
-    { id: 'users', name: 'Users', visible: isManager() }
+    { id: 'users', name: 'Users', visible: isManager() },
+    { id: 'company', name: 'Company', visible: isManager() }
   ].filter(tab => tab.visible);
 
   return (
