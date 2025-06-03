@@ -130,6 +130,16 @@ def create_booking(token, car_id):
     print_test_header("Create Booking")
     
     headers = {"Authorization": f"Bearer {token}"}
+    
+    # First, get the current user info to verify we're logged in correctly
+    response = requests.get(f"{API_URL}/auth/me", headers=headers)
+    print("Current user info:")
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return None
+    
+    # Now create the booking
     start_date = datetime.utcnow() + timedelta(days=1)
     end_date = start_date + timedelta(days=2)
     
@@ -141,6 +151,7 @@ def create_booking(token, car_id):
     }
     
     response = requests.post(f"{API_URL}/bookings", json=booking_data, headers=headers)
+    print("Booking creation response:")
     print_response(response)
     
     if not assert_status_code(response, 200):
