@@ -161,6 +161,7 @@ class UserResponse(BaseModel):
     role: UserRole
     department: Optional[str] = None
     phone: Optional[str] = None
+    language: Language
     is_active: bool
     created_at: datetime
 
