@@ -1595,6 +1595,7 @@ function App() {
 
 const MainApp = () => {
   const { user, loading } = useAuth();
+  const { t, i18n } = useTranslation();
   const [currentView, setCurrentView] = useState('landing'); // 'landing', 'login', 'register', 'dashboard'
 
   const handleGetStarted = (action) => {
