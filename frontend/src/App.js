@@ -349,7 +349,7 @@ const CompanyRegistrationForm = ({ onBack }) => {
 };
 
 const FleetDashboard = () => {
-  const { user, logout, isManager } = useAuth();
+  const { user, company, logout, isManager } = useAuth();
   const [cars, setCars] = useState([]);
   const [downtimes, setDowntimes] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -362,6 +362,7 @@ const FleetDashboard = () => {
   const [showAddDowntimeModal, setShowAddDowntimeModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [selectedCar, setSelectedCar] = useState(null);
   const [editingCar, setEditingCar] = useState(null);
 
