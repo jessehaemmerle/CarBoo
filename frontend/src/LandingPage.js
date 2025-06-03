@@ -91,14 +91,14 @@ const LandingPage = ({ onGetStarted }) => {
               <p className="hero-description">
                 Complete fleet management solution for modern businesses. Track vehicles, 
                 manage bookings, schedule maintenance, and optimize your fleet operations 
-                with our powerful SaaS platform.
+                with our powerful platform - completely free.
               </p>
               <div className="hero-buttons">
                 <button 
                   className="btn-primary large"
                   onClick={() => onGetStarted('register')}
                 >
-                  Start Free Trial
+                  Get Started
                 </button>
                 <button className="btn-secondary large">
                   Watch Demo
