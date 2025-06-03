@@ -214,7 +214,7 @@ const CompanyRegistrationForm = ({ onBack }) => {
             ← Back to home
           </button>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Start Your Free Trial
+            Get Started
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Register your company and create your fleet manager account
