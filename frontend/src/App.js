@@ -489,7 +489,7 @@ const LoginForm = ({ onBack }) => {
     e.preventDefault();
     
     if (!email || !password) {
-      setError(t('validation.allFieldsRequired'));
+      setError(t('forms.required'));
       return;
     }
     
