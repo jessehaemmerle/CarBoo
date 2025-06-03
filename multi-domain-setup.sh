@@ -1,0 +1,249 @@
+#!/bin/bash
+
+# FleetManager Pro - Multi-Domain Setup Script
+# Sets up the application to work with Traefik reverse proxy for multiple domains
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+echo -e "${BLUE}🌐 FleetManager Pro - Multi-Domain Setup${NC}"
+echo "=========================================="
+
+# Function to display help
+show_help() {
+    echo ""
+    echo "🚀 Available commands:"
+    echo "  ./multi-domain-setup.sh init      - Initialize Traefik network and setup"
+    echo "  ./multi-domain-setup.sh deploy    - Deploy FleetManager with domain"
+    echo "  ./multi-domain-setup.sh stop      - Stop FleetManager services"
+    echo "  ./multi-domain-setup.sh restart   - Restart FleetManager services"
+    echo "  ./multi-domain-setup.sh logs      - View logs"
+    echo "  ./multi-domain-setup.sh status    - Show services status"
+    echo "  ./multi-domain-setup.sh remove    - Remove FleetManager (keep Traefik)"
+    echo "  ./multi-domain-setup.sh help      - Show this help message"
+    echo ""
+    echo "📋 Prerequisites:"
+    echo "  - Domain name pointing to your VPS IP"
+    echo "  - Ports 80 and 443 available"
+    echo "  - Docker and Docker Compose installed"
+}
+
+# Initialize Traefik network
+init_traefik() {
+    print_status "Setting up Traefik for multi-domain deployment..."
+    
+    # Create external network for Traefik if it doesn't exist
+    if ! docker network ls | grep -q "traefik-network"; then
+        print_status "Creating Traefik network..."
+        docker network create traefik-network
+        print_success "Traefik network created"
+    else
+        print_success "Traefik network already exists"
+    fi
+    
+    # Create .env file for multi-domain setup
+    if [ ! -f .env.domain ]; then
+        print_status "Creating domain environment template..."
+        cat > .env.domain << 'EOF'
+# Multi-Domain Configuration for FleetManager Pro
+# Replace the values below with your actual configuration
+
+# Your domain name (e.g., fleet.yourdomain.com)
+DOMAIN=your-domain.com
+
+# Email for Let's Encrypt certificates
+ACME_EMAIL=your-email@domain.com
+
+# Database Configuration
+MONGO_PASSWORD=generate-secure-password-here
+
+# Security Configuration
+JWT_SECRET=generate-super-secure-jwt-secret-key-here
+
+# Traefik Dashboard Authentication (optional)
+# Generate with: echo $(htpasswd -nb admin password) | sed -e s/\\$/\\$\\$/g
+TRAEFIK_AUTH=admin:$$2y$$10$$placeholder
+
+# Environment
+ENVIRONMENT=production
+EOF
+        print_success "Domain environment template created: .env.domain"
+        print_warning "Please edit .env.domain with your actual domain and settings!"
+    else
+        print_success "Domain environment file already exists"
+    fi
+    
+    print_success "Traefik initialization completed!"
+    echo ""
+    echo "📝 Next steps:"
+    echo "1. Edit .env.domain with your domain name and email"
+    echo "2. Point your domain's DNS to this server's IP address"
+    echo "3. Run: ./multi-domain-setup.sh deploy"
+}
+
+# Deploy FleetManager with domain
+deploy_fleetmanager() {
+    if [ ! -f .env.domain ]; then
+        print_error ".env.domain file not found!"
+        print_warning "Run './multi-domain-setup.sh init' first"
+        exit 1
+    fi
+    
+    # Load environment variables
+    set -a
+    source .env.domain
+    set +a
+    
+    if [ "$DOMAIN" = "your-domain.com" ]; then
+        print_error "Please configure your domain in .env.domain file!"
+        exit 1
+    fi
+    
+    print_status "Deploying FleetManager Pro with domain: $DOMAIN"
+    
+    # Generate secure passwords if using placeholders
+    if [[ "$MONGO_PASSWORD" == *"generate"* ]]; then
+        MONGO_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+        sed -i "s/generate-secure-password-here/$MONGO_PASSWORD/g" .env.domain
+        print_success "Generated secure MongoDB password"
+    fi
+    
+    if [[ "$JWT_SECRET" == *"generate"* ]]; then
+        JWT_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-50)
+        sed -i "s/generate-super-secure-jwt-secret-key-here/$JWT_SECRET/g" .env.domain
+        print_success "Generated secure JWT secret"
+    fi
+    
+    # Deploy with Traefik configuration
+    print_status "Starting services with Traefik configuration..."
+    docker-compose -f docker-compose.traefik.yml --env-file .env.domain up -d --build
+    
+    print_success "FleetManager Pro deployed successfully!"
+    echo ""
+    echo "🌐 Your application will be available at:"
+    echo "   https://$DOMAIN"
+    echo ""
+    echo "🔒 SSL certificate will be automatically generated by Let's Encrypt"
+    echo "📊 Traefik dashboard (if enabled): https://traefik.$DOMAIN"
+    echo ""
+    echo "⏳ Wait 1-2 minutes for SSL certificate generation on first deployment"
+}
+
+# Stop services
+stop_services() {
+    print_status "Stopping FleetManager Pro services..."
+    if [ -f .env.domain ]; then
+        docker-compose -f docker-compose.traefik.yml --env-file .env.domain down
+    else
+        docker-compose -f docker-compose.traefik.yml down
+    fi
+    print_success "Services stopped"
+}
+
+# Restart services
+restart_services() {
+    print_status "Restarting FleetManager Pro services..."
+    if [ -f .env.domain ]; then
+        docker-compose -f docker-compose.traefik.yml --env-file .env.domain restart
+    else
+        print_error ".env.domain file not found!"
+        exit 1
+    fi
+    print_success "Services restarted"
+}
+
+# View logs
+view_logs() {
+    print_status "Viewing logs (press Ctrl+C to exit)..."
+    if [ -f .env.domain ]; then
+        docker-compose -f docker-compose.traefik.yml --env-file .env.domain logs -f
+    else
+        docker-compose -f docker-compose.traefik.yml logs -f
+    fi
+}
+
+# Check status
+check_status() {
+    print_status "Services status:"
+    if [ -f .env.domain ]; then
+        docker-compose -f docker-compose.traefik.yml --env-file .env.domain ps
+    else
+        docker-compose -f docker-compose.traefik.yml ps
+    fi
+    
+    echo ""
+    print_status "Traefik network:"
+    docker network ls | grep traefik || echo "Traefik network not found"
+    
+    echo ""
+    print_status "Listening ports:"
+    sudo netstat -tlnp | grep -E ":80|:443" || echo "No services listening on ports 80/443"
+}
+
+# Remove FleetManager (keep Traefik network for other apps)
+remove_fleetmanager() {
+    print_warning "This will remove FleetManager Pro but keep Traefik for other applications"
+    read -p "Are you sure? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        stop_services
+        
+        print_status "Removing FleetManager volumes..."
+        docker volume rm fleetmanager_mongodb_data 2>/dev/null || true
+        
+        print_success "FleetManager Pro removed"
+        print_status "Traefik network preserved for other applications"
+    else
+        print_status "Removal cancelled"
+    fi
+}
+
+# Handle command line arguments
+case "${1:-help}" in
+    "init")
+        init_traefik
+        ;;
+    "deploy")
+        deploy_fleetmanager
+        ;;
+    "stop")
+        stop_services
+        ;;
+    "restart")
+        restart_services
+        ;;
+    "logs")
+        view_logs
+        ;;
+    "status")
+        check_status
+        ;;
+    "remove")
+        remove_fleetmanager
+        ;;
+    "help"|*)
+        show_help
+        ;;
+esac
