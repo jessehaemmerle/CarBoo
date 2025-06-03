@@ -12,6 +12,8 @@
     "back": "Atrás",
     "next": "Siguiente",
     "loading": "Cargando...",
+    "processing": "Procesando...",
+    "pleaseWait": "Por favor espere...",
     "error": "Error",
     "success": "Éxito",
     "name": "Nombre",
@@ -23,7 +25,8 @@
     "password": "Contraseña",
     "confirmPassword": "Confirmar contraseña",
     "search": "Buscar",
-    "filter": "Filtro"
+    "filter": "Filtro",
+    "backToHome": "← Volver al inicio"
   },
   "navigation": {
     "dashboard": "Panel",
