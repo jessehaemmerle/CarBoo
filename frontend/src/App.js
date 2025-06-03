@@ -384,6 +384,7 @@ const CompanyRegistrationForm = ({ onBack }) => {
 
 const FleetDashboard = () => {
   const { user, company, logout, isManager } = useAuth();
+  const { t, i18n } = useTranslation();
   const [cars, setCars] = useState([]);
   const [downtimes, setDowntimes] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -391,6 +392,29 @@ const FleetDashboard = () => {
   const [fleetStats, setFleetStats] = useState({});
   const [categoryStats, setCategoryStats] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  const handleLanguageChange = async (langCode) => {
+    try {
+      if (user?.id) {
+        const response = await fetch(`${API}/users/${user.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ language: langCode })
+        });
+
+        if (response.ok) {
+          console.log('Language preference updated successfully');
+        } else {
+          console.error('Failed to update language preference');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating language preference:', error);
+    }
+  };
   const [showAddCarModal, setShowAddCarModal] = useState(false);
   const [showEditCarModal, setShowEditCarModal] = useState(false);
   const [showAddDowntimeModal, setShowAddDowntimeModal] = useState(false);
