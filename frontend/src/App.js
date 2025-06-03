@@ -607,11 +607,6 @@ const FleetDashboard = () => {
         <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
           <h3 className="text-2xl font-bold text-blue-600">{fleetStats.total_cars || 0}</h3>
           <p className="text-gray-600">Total Cars</p>
-          {company && company.max_vehicles > 0 && (
-            <div className="text-xs text-gray-500 mt-1">
-              {Math.round((fleetStats.total_cars || 0) / company.max_vehicles * 100)}% of limit
-            </div>
-          )}
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
           <h3 className="text-2xl font-bold text-green-600">{fleetStats.available_cars || 0}</h3>
