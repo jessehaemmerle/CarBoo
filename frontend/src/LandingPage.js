@@ -70,7 +70,6 @@ const LandingPage = ({ onGetStarted }) => {
             </div>
             <div className="nav-links">
               <a href="#features">Features</a>
-              <a href="#pricing">Pricing</a>
               <a href="#about">About</a>
               <button className="btn-secondary" onClick={() => onGetStarted('login')}>
                 Sign In
