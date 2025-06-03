@@ -361,9 +361,138 @@ async def get_user_company(user: User) -> Company:
         raise HTTPException(status_code=404, detail="Company not found")
     return Company(**company)
 
+# Company routes
+@api_router.post("/companies/register", response_model=Token)
+async def register_company(registration_data: CompanyRegistration):
+    """Register a new company with fleet manager"""
+    
+    # Check if company email already exists
+    existing_company = await db.companies.find_one({"email": registration_data.company_email})
+    if existing_company:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Company email already registered"
+        )
+    
+    # Check if manager email already exists
+    existing_user = await db.users.find_one({"email": registration_data.manager_email})
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Manager email already registered"
+        )
+    
+    # Create company slug
+    base_slug = create_company_slug(registration_data.company_name)
+    company_slug = base_slug
+    counter = 1
+    while await db.companies.find_one({"slug": company_slug}):
+        company_slug = f"{base_slug}-{counter}"
+        counter += 1
+    
+    # Get trial limits
+    trial_limits = await get_subscription_limits(SubscriptionPlan.TRIAL)
+    trial_end_date = datetime.utcnow() + timedelta(days=trial_limits["trial_days"])
+    
+    # Create company
+    company = Company(
+        name=registration_data.company_name,
+        slug=company_slug,
+        email=registration_data.company_email,
+        phone=registration_data.company_phone,
+        address=registration_data.company_address,
+        website=registration_data.company_website,
+        subscription_plan=SubscriptionPlan.TRIAL,
+        max_vehicles=trial_limits["max_vehicles"],
+        max_users=trial_limits["max_users"],
+        trial_end_date=trial_end_date
+    )
+    
+    await db.companies.insert_one(company.dict())
+    
+    # Create fleet manager
+    hashed_password = get_password_hash(registration_data.manager_password)
+    manager = User(
+        company_id=company.id,
+        name=registration_data.manager_name,
+        email=registration_data.manager_email,
+        role=UserRole.FLEET_MANAGER,
+        department=registration_data.manager_department,
+        phone=registration_data.manager_phone
+    )
+    
+    # Store user with hashed password
+    manager_dict = manager.dict()
+    manager_dict["password_hash"] = hashed_password
+    await db.users.insert_one(manager_dict)
+    
+    # Create access token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": manager.id}, expires_delta=access_token_expires
+    )
+    
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse(**manager.dict()),
+        company=CompanyResponse(**company.dict())
+    )
+
+@api_router.get("/companies/me", response_model=CompanyResponse)
+async def get_my_company(current_user: User = Depends(get_current_user)):
+    """Get current user's company information"""
+    company = await get_user_company(current_user)
+    
+    # Add stats for managers
+    if current_user.role == UserRole.FLEET_MANAGER:
+        total_cars = await db.cars.count_documents({"company_id": current_user.company_id})
+        total_users = await db.users.count_documents({"company_id": current_user.company_id})
+        total_bookings = await db.bookings.count_documents({"company_id": current_user.company_id})
+        
+        stats = {
+            "total_cars": total_cars,
+            "total_users": total_users,
+            "total_bookings": total_bookings,
+            "usage_percentage": {
+                "vehicles": (total_cars / company.max_vehicles * 100) if company.max_vehicles > 0 else 0,
+                "users": (total_users / company.max_users * 100) if company.max_users > 0 else 0
+            }
+        }
+        
+        company_response = CompanyResponse(**company.dict())
+        company_response.stats = stats
+        return company_response
+    
+    return CompanyResponse(**company.dict())
+
+@api_router.put("/companies/me", response_model=CompanyResponse)
+async def update_my_company(company_update: CompanyUpdate, current_manager: User = Depends(get_current_manager)):
+    """Update company information (managers only)"""
+    update_data = {k: v for k, v in company_update.dict().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No update data provided")
+    
+    result = await db.companies.update_one(
+        {"id": current_manager.company_id}, 
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    updated_company = await get_user_company(current_manager)
+    return CompanyResponse(**updated_company.dict())
+
 # Authentication routes
 @api_router.post("/auth/register", response_model=Token)
 async def register_user(user_data: UserCreate):
+    # This endpoint is deprecated in favor of company registration
+    # Keeping for backward compatibility but should be disabled in production
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Direct user registration is no longer supported. Please use company registration instead."
+    )
     # Check if user already exists
     existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
