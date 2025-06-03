@@ -133,6 +133,7 @@ class UserCreate(BaseModel):
     role: UserRole
     department: Optional[str] = None
     phone: Optional[str] = None
+    language: Language = Language.ENGLISH
 
 class CompanyRegistration(BaseModel):
     # Company info
