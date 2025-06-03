@@ -381,10 +381,6 @@ async def register_company(registration_data: CompanyRegistration):
         company_slug = f"{base_slug}-{counter}"
         counter += 1
     
-    # Get trial limits
-    trial_limits = await get_subscription_limits(SubscriptionPlan.TRIAL)
-    trial_end_date = datetime.utcnow() + timedelta(days=trial_limits["trial_days"])
-    
     # Create company
     company = Company(
         name=registration_data.company_name,
@@ -392,11 +388,7 @@ async def register_company(registration_data: CompanyRegistration):
         email=registration_data.company_email,
         phone=registration_data.company_phone,
         address=registration_data.company_address,
-        website=registration_data.company_website,
-        subscription_plan=SubscriptionPlan.TRIAL,
-        max_vehicles=trial_limits["max_vehicles"],
-        max_users=trial_limits["max_users"],
-        trial_end_date=trial_end_date
+        website=registration_data.company_website
     )
     
     await db.companies.insert_one(company.dict())
