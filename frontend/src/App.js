@@ -21,6 +21,7 @@ const useAuth = () => {
 };
 
 const AuthProvider = ({ children }) => {
+  const { i18n } = useTranslation();
   const [user, setUser] = useState(null);
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
