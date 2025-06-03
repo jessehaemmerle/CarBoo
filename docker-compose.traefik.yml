@@ -1,0 +1,168 @@
+# Multi-Domain Docker Setup with Traefik
+# This configuration allows multiple applications on one VPS with different domains
+
+version: '3.8'
+
+services:
+  # Traefik Reverse Proxy
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      # Enable Docker provider
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=traefik-network
+      
+      # Define entrypoints
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      
+      # Enable dashboard (optional)
+      - --api.dashboard=true
+      - --api.insecure=false
+      
+      # SSL/TLS with Let's Encrypt
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      
+      # Redirect HTTP to HTTPS
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      
+      # Logging
+      - --log.level=INFO
+      - --accesslog=true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_acme:/acme.json
+      - traefik_logs:/var/log/traefik
+    networks:
+      - traefik-network
+    labels:
+      # Traefik dashboard (optional)
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_AUTH}"
+    environment:
+      - TRAEFIK_LOG_LEVEL=INFO
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: fleetmanager_mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: fleetmanager
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - fleetmanager-internal
+    # No ports exposed - internal access only
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: fleetmanager_backend
+    restart: unless-stopped
+    environment:
+      - MONGO_URL=mongodb://root:${MONGO_PASSWORD}@mongodb:27017/fleetmanager?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
+      - ENVIRONMENT=production
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - fleetmanager-internal
+      - traefik-network
+    labels:
+      # Enable Traefik
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
+      
+      # API routes
+      - "traefik.http.routers.fleetmanager-api.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.fleetmanager-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.fleetmanager-api.service=fleetmanager-api"
+      - "traefik.http.services.fleetmanager-api.loadbalancer.server.port=8001"
+      
+      # CORS headers for API
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolalloworiginlist=https://${DOMAIN}"
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.api-cors.headers.accesscontrolallowheaders=Content-Type,Authorization"
+      - "traefik.http.routers.fleetmanager-api.middlewares=api-cors"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend Web App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        - REACT_APP_BACKEND_URL=https://${DOMAIN}
+    container_name: fleetmanager_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - traefik-network
+    labels:
+      # Enable Traefik
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
+      
+      # Frontend routes
+      - "traefik.http.routers.fleetmanager-frontend.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.fleetmanager-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.fleetmanager-frontend.service=fleetmanager-frontend"
+      - "traefik.http.services.fleetmanager-frontend.loadbalancer.server.port=3000"
+      
+      # Security headers
+      - "traefik.http.middlewares.security-headers.headers.framedeny=true"
+      - "traefik.http.middlewares.security-headers.headers.sslredirect=true"
+      - "traefik.http.middlewares.security-headers.headers.contenttypenosniff=true"
+      - "traefik.http.middlewares.security-headers.headers.browserxssfilter=true"
+      - "traefik.http.routers.fleetmanager-frontend.middlewares=security-headers"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  mongodb_data:
+    driver: local
+  traefik_acme:
+    driver: local
+  traefik_logs:
+    driver: local
+
+networks:
+  traefik-network:
+    external: true
+  fleetmanager-internal:
+    driver: bridge
