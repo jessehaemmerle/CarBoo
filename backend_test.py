@@ -1003,17 +1003,18 @@ def test_license_validation(license_key, expected_valid=True, expected_assigned=
 def test_company_registration_with_license(license_key, expected_success=True):
     print_test_header(f"Company Registration with License - {license_key}")
     
-    # Create unique company data
-    timestamp = int(time.time())
+    # Create unique company data with random timestamp to ensure uniqueness
+    timestamp = int(time.time() * 1000)
+    random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
     company_data = {
         "company_name": f"License Test Company {timestamp}",
-        "company_email": f"license_test{timestamp}@example.com",
+        "company_email": f"license_test_{random_suffix}@example.com",
         "company_phone": "123-456-7890",
         "company_address": "123 License Test St",
         "company_website": "https://licensetest.com",
         "license_key": license_key,
         "manager_name": "License Test Manager",
-        "manager_email": f"license_manager{timestamp}@example.com",
+        "manager_email": f"license_manager_{random_suffix}@example.com",
         "manager_password": "Password123!",
         "manager_phone": "123-456-7890",
         "manager_department": "License Management"
