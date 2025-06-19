@@ -594,10 +594,10 @@ async def get_company_license_info_endpoint(current_user: dict = Depends(get_cur
 
 # Admin License Management Routes
 @api_router.post("/admin/licenses", response_model=LicenseResponse)
-async def create_license(license_data: LicenseCreate, current_user: dict = Depends(get_current_user)):
+async def create_license(license_data: LicenseCreate, current_user: User = Depends(get_current_user)):
     """Create a new license (admin only)"""
     # For now, any fleet manager can create licenses. In production, you might want admin-only access
-    if current_user["role"] != UserRole.FLEET_MANAGER:
+    if current_user.role != UserRole.FLEET_MANAGER:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only fleet managers can create licenses"
