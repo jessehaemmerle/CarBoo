@@ -82,6 +82,18 @@ class Language(str, Enum):
     GERMAN = "de"
     SPANISH = "es"
 
+class LicenseStatus(str, Enum):
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    SUSPENDED = "suspended"
+    REVOKED = "revoked"
+
+class LicenseType(str, Enum):
+    TRIAL = "trial"
+    BASIC = "basic"
+    PROFESSIONAL = "professional"
+    ENTERPRISE = "enterprise"
+
 # Company Models
 class Company(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
