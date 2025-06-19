@@ -687,6 +687,21 @@ async def health_check():
 async def register_company(registration_data: CompanyRegistration):
     """Register a new company with fleet manager"""
     
+    # Validate license key first
+    license_doc = await validate_license_key(registration_data.license_key)
+    if not license_doc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired license key"
+        )
+    
+    # Check if license is already assigned
+    if license_doc.get("company_id"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="License key is already assigned to another company"
+        )
+    
     # Check if company email already exists
     existing_company = await db.companies.find_one({"email": registration_data.company_email})
     if existing_company:
@@ -718,10 +733,22 @@ async def register_company(registration_data: CompanyRegistration):
         email=registration_data.company_email,
         phone=registration_data.company_phone,
         address=registration_data.company_address,
-        website=registration_data.company_website
+        website=registration_data.company_website,
+        license_id=license_doc["id"]  # Assign the license
     )
     
     await db.companies.insert_one(company.dict())
+    
+    # Assign license to company
+    await db.licenses.update_one(
+        {"license_key": registration_data.license_key},
+        {
+            "$set": {
+                "company_id": company.id,
+                "activated_date": datetime.utcnow()
+            }
+        }
+    )
     
     # Create fleet manager
     hashed_password = get_password_hash(registration_data.manager_password)
