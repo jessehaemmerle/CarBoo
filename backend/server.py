@@ -103,6 +103,7 @@ class Company(BaseModel):
     phone: Optional[str] = None
     address: Optional[str] = None
     website: Optional[str] = None
+    license_id: Optional[str] = None  # Associated license
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
