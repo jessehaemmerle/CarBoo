@@ -732,6 +732,298 @@ const LoginForm = ({ onBack, onSwitchToRegister }) => {
   );
 };
 
+// License Management Component
+const LicenseManagement = () => {
+  const { t } = useTranslation();
+  const [licenses, setLicenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [newLicense, setNewLicense] = useState({
+    license_type: 'basic',
+    max_users: 25,
+    max_vehicles: 50,
+    expires_date: '',
+    notes: ''
+  });
+
+  useEffect(() => {
+    fetchLicenses();
+  }, []);
+
+  const fetchLicenses = async () => {
+    try {
+      const response = await fetch(`${API}/api/admin/licenses`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setLicenses(data);
+      }
+    } catch (error) {
+      console.error('Error fetching licenses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateLicense = async (e) => {
+    e.preventDefault();
+    setCreating(true);
+    setCreateError('');
+
+    try {
+      const licenseData = {
+        ...newLicense,
+        expires_date: newLicense.expires_date ? new Date(newLicense.expires_date).toISOString() : null,
+        max_users: newLicense.max_users || null,
+        max_vehicles: newLicense.max_vehicles || null
+      };
+
+      const response = await fetch(`${API}/api/admin/licenses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(licenseData)
+      });
+
+      if (response.ok) {
+        const createdLicense = await response.json();
+        setLicenses(prev => [createdLicense, ...prev]);
+        setShowCreateForm(false);
+        setNewLicense({
+          license_type: 'basic',
+          max_users: 25,
+          max_vehicles: 50,
+          expires_date: '',
+          notes: ''
+        });
+      } else {
+        const errorData = await response.json();
+        setCreateError(errorData.detail || 'Failed to create license');
+      }
+    } catch (error) {
+      console.error('Error creating license:', error);
+      setCreateError('Network error');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const revokeLicense = async (licenseId) => {
+    if (!confirm('Are you sure you want to revoke this license?')) return;
+
+    try {
+      const response = await fetch(`${API}/api/admin/licenses/${licenseId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        setLicenses(prev => prev.map(license => 
+          license.id === licenseId 
+            ? { ...license, status: 'revoked' }
+            : license
+        ));
+      }
+    } catch (error) {
+      console.error('Error revoking license:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">License Management</h2>
+        <button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+        >
+          + Create License
+        </button>
+      </div>
+
+      {/* Create License Form */}
+      {showCreateForm && (
+        <div className="bg-white shadow rounded-lg p-6 mb-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Create New License</h3>
+          
+          {createError && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              {createError}
+            </div>
+          )}
+
+          <form onSubmit={handleCreateLicense} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">License Type</label>
+                <select
+                  value={newLicense.license_type}
+                  onChange={(e) => setNewLicense(prev => ({ ...prev, license_type: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                >
+                  <option value="trial">Trial</option>
+                  <option value="basic">Basic</option>
+                  <option value="professional">Professional</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Expires Date</label>
+                <input
+                  type="date"
+                  value={newLicense.expires_date}
+                  onChange={(e) => setNewLicense(prev => ({ ...prev, expires_date: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Max Users (leave empty for unlimited)</label>
+                <input
+                  type="number"
+                  value={newLicense.max_users || ''}
+                  onChange={(e) => setNewLicense(prev => ({ ...prev, max_users: e.target.value ? parseInt(e.target.value) : null }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Max Vehicles (leave empty for unlimited)</label>
+                <input
+                  type="number"
+                  value={newLicense.max_vehicles || ''}
+                  onChange={(e) => setNewLicense(prev => ({ ...prev, max_vehicles: e.target.value ? parseInt(e.target.value) : null }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Notes</label>
+              <textarea
+                value={newLicense.notes}
+                onChange={(e) => setNewLicense(prev => ({ ...prev, notes: e.target.value }))}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                rows="3"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowCreateForm(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={creating}
+                className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+              >
+                {creating ? 'Creating...' : 'Create License'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Licenses List */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900">All Licenses ({licenses.length})</h3>
+        </div>
+        
+        {licenses.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License Key</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Limits</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expires</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {licenses.map((license) => (
+                  <tr key={license.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                      {license.license_key}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {license.license_type.charAt(0).toUpperCase() + license.license_type.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        license.status === 'active' ? 'bg-green-100 text-green-800' :
+                        license.status === 'expired' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {license.status.charAt(0).toUpperCase() + license.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {license.company_name || <span className="text-gray-400">Unassigned</span>}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="text-xs">
+                        <div>Users: {license.max_users || '∞'}</div>
+                        <div>Vehicles: {license.max_vehicles || '∞'}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {license.expires_date ? new Date(license.expires_date).toLocaleDateString() : 'Never'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {license.status === 'active' && (
+                        <button
+                          onClick={() => revokeLicense(license.id)}
+                          className="text-red-600 hover:text-red-900 text-sm"
+                        >
+                          Revoke
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="px-6 py-12 text-center">
+            <p className="text-gray-500">No licenses created yet</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Fleet Dashboard Component
 const FleetDashboard = () => {
   const { user, company, logout, isManager } = useAuth();
