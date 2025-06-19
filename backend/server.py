@@ -651,9 +651,9 @@ async def list_licenses(current_user: User = Depends(get_current_user)):
     return licenses
 
 @api_router.delete("/admin/licenses/{license_id}")
-async def revoke_license(license_id: str, current_user: dict = Depends(get_current_user)):
+async def revoke_license(license_id: str, current_user: User = Depends(get_current_user)):
     """Revoke a license (admin only)"""
-    if current_user["role"] != UserRole.FLEET_MANAGER:
+    if current_user.role != UserRole.FLEET_MANAGER:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only fleet managers can revoke licenses"
