@@ -484,6 +484,193 @@ async def get_user_company(user: User) -> Company:
     return Company(**company)
 
 # Company routes
+# License routes
+@api_router.post("/licenses/validate", response_model=dict)
+async def validate_license(validation_data: LicenseValidation):
+    """Validate a license key"""
+    license_doc = await validate_license_key(validation_data.license_key)
+    
+    if not license_doc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired license key"
+        )
+    
+    # Check if license is already assigned to a company
+    if license_doc.get("company_id"):
+        company = await db.companies.find_one({"id": license_doc["company_id"]})
+        return {
+            "valid": True,
+            "license_type": license_doc["license_type"],
+            "already_assigned": True,
+            "company_name": company.get("name") if company else "Unknown"
+        }
+    
+    return {
+        "valid": True,
+        "license_type": license_doc["license_type"],
+        "already_assigned": False,
+        "max_users": license_doc.get("max_users"),
+        "max_vehicles": license_doc.get("max_vehicles"),
+        "expires_date": license_doc.get("expires_date")
+    }
+
+@api_router.post("/licenses/assign")
+async def assign_license_to_company(validation_data: LicenseValidation, current_user: dict = Depends(get_current_user)):
+    """Assign a license to the current user's company (only for fleet managers)"""
+    if current_user["role"] != UserRole.FLEET_MANAGER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only fleet managers can assign licenses"
+        )
+    
+    license_doc = await validate_license_key(validation_data.license_key)
+    
+    if not license_doc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired license key"
+        )
+    
+    # Check if license is already assigned
+    if license_doc.get("company_id"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="License key is already assigned to another company"
+        )
+    
+    # Get current user's company
+    company = await get_user_company(current_user)
+    
+    # Check if company already has a license
+    if company.license_id:
+        current_license = await db.licenses.find_one({"id": company.license_id})
+        if current_license and current_license["status"] == LicenseStatus.ACTIVE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Company already has an active license"
+            )
+    
+    # Assign license to company
+    await db.licenses.update_one(
+        {"license_key": validation_data.license_key},
+        {
+            "$set": {
+                "company_id": company.id,
+                "activated_date": datetime.utcnow()
+            }
+        }
+    )
+    
+    # Update company with license ID
+    await db.companies.update_one(
+        {"id": company.id},
+        {"$set": {"license_id": license_doc["id"]}}
+    )
+    
+    return {"message": "License successfully assigned to company"}
+
+@api_router.get("/licenses/company-info")
+async def get_company_license_info_endpoint(current_user: dict = Depends(get_current_user)):
+    """Get license information for current user's company"""
+    company = await get_user_company(current_user)
+    license_info = await get_company_license_info(company.id)
+    
+    if not license_info:
+        return {
+            "has_license": False,
+            "message": "No active license found for company"
+        }
+    
+    return {
+        "has_license": True,
+        "license_type": license_info["license_type"],
+        "status": license_info["status"],
+        "expires_date": license_info.get("expires_date"),
+        "limits": license_info["limits"]
+    }
+
+# Admin License Management Routes
+@api_router.post("/admin/licenses", response_model=LicenseResponse)
+async def create_license(license_data: LicenseCreate, current_user: dict = Depends(get_current_user)):
+    """Create a new license (admin only)"""
+    # For now, any fleet manager can create licenses. In production, you might want admin-only access
+    if current_user["role"] != UserRole.FLEET_MANAGER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only fleet managers can create licenses"
+        )
+    
+    # Generate unique license key
+    license_key = generate_license_key()
+    
+    # Ensure license key is unique
+    while await db.licenses.find_one({"license_key": license_key}):
+        license_key = generate_license_key()
+    
+    license = License(
+        license_key=license_key,
+        license_type=license_data.license_type,
+        max_users=license_data.max_users,
+        max_vehicles=license_data.max_vehicles,
+        expires_date=license_data.expires_date,
+        created_by=current_user["id"],
+        notes=license_data.notes
+    )
+    
+    # Insert license into database
+    await db.licenses.insert_one(license.dict())
+    
+    return LicenseResponse(**license.dict())
+
+@api_router.get("/admin/licenses", response_model=List[LicenseResponse])
+async def list_licenses(current_user: dict = Depends(get_current_user)):
+    """List all licenses (admin only)"""
+    if current_user["role"] != UserRole.FLEET_MANAGER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only fleet managers can view licenses"
+        )
+    
+    licenses_cursor = db.licenses.find({}).sort("issued_date", -1)
+    licenses = []
+    
+    async for license_doc in licenses_cursor:
+        license_response = LicenseResponse(**license_doc)
+        
+        # Add company name if assigned
+        if license_doc.get("company_id"):
+            company = await db.companies.find_one({"id": license_doc["company_id"]})
+            if company:
+                license_response.company_name = company["name"]
+        
+        licenses.append(license_response)
+    
+    return licenses
+
+@api_router.delete("/admin/licenses/{license_id}")
+async def revoke_license(license_id: str, current_user: dict = Depends(get_current_user)):
+    """Revoke a license (admin only)"""
+    if current_user["role"] != UserRole.FLEET_MANAGER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only fleet managers can revoke licenses"
+        )
+    
+    # Update license status
+    result = await db.licenses.update_one(
+        {"id": license_id},
+        {"$set": {"status": LicenseStatus.REVOKED}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="License not found"
+        )
+    
+    return {"message": "License revoked successfully"}
+
 @api_router.get("/health")
 async def health_check():
     """Health check endpoint for monitoring and load balancers"""
