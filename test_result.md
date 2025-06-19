@@ -635,12 +635,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Licensing System - Database Models"
-    - "Licensing System - Core Functions"
-    - "Licensing System - API Endpoints"
-    - "Licensing System - Company Registration Integration"
-    - "Licensing System - Usage Limits Enforcement"
-    - "Licensing System - Sample License Generation"
     - "Licensing System - Registration Form Update"
     - "Licensing System - License Validation UI"
     - "Licensing System - Admin License Management"
