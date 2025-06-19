@@ -518,9 +518,9 @@ async def validate_license(validation_data: LicenseValidation):
     }
 
 @api_router.post("/licenses/assign")
-async def assign_license_to_company(validation_data: LicenseValidation, current_user: dict = Depends(get_current_user)):
+async def assign_license_to_company(validation_data: LicenseValidation, current_user: User = Depends(get_current_user)):
     """Assign a license to the current user's company (only for fleet managers)"""
-    if current_user["role"] != UserRole.FLEET_MANAGER:
+    if current_user.role != UserRole.FLEET_MANAGER:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only fleet managers can assign licenses"
