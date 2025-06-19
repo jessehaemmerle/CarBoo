@@ -626,9 +626,9 @@ async def create_license(license_data: LicenseCreate, current_user: User = Depen
     return LicenseResponse(**license.dict())
 
 @api_router.get("/admin/licenses", response_model=List[LicenseResponse])
-async def list_licenses(current_user: dict = Depends(get_current_user)):
+async def list_licenses(current_user: User = Depends(get_current_user)):
     """List all licenses (admin only)"""
-    if current_user["role"] != UserRole.FLEET_MANAGER:
+    if current_user.role != UserRole.FLEET_MANAGER:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only fleet managers can view licenses"
