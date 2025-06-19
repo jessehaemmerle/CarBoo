@@ -616,7 +616,7 @@ async def create_license(license_data: LicenseCreate, current_user: User = Depen
         max_users=license_data.max_users,
         max_vehicles=license_data.max_vehicles,
         expires_date=license_data.expires_date,
-        created_by=current_user["id"],
+        created_by=current_user.id,
         notes=license_data.notes
     )
     
