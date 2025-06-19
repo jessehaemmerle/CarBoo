@@ -969,9 +969,428 @@ def run_subscription_removal_tests():
     print("\n🏁 All subscription removal tests completed successfully!\n")
     return True
 
+# Licensing System Tests
+def test_license_validation(license_key, expected_valid=True, expected_assigned=False):
+    print_test_header(f"License Validation - {license_key}")
+    
+    validation_data = {
+        "license_key": license_key
+    }
+    
+    response = requests.post(f"{API_URL}/licenses/validate", json=validation_data)
+    print_response(response)
+    
+    if expected_valid:
+        if not assert_status_code(response, 200):
+            return False
+        
+        data = response.json()
+        if not assert_field_equals(data, "valid", True):
+            return False
+        
+        if not assert_field_equals(data, "already_assigned", expected_assigned):
+            return False
+        
+        print(f"✅ License validation successful for {license_key}")
+        return data
+    else:
+        if not assert_status_code(response, 400):
+            return False
+        
+        print(f"✅ Invalid license correctly rejected: {license_key}")
+        return True
+
+def test_company_registration_with_license(license_key, expected_success=True):
+    print_test_header(f"Company Registration with License - {license_key}")
+    
+    # Create unique company data
+    timestamp = int(time.time())
+    company_data = {
+        "company_name": f"License Test Company {timestamp}",
+        "company_email": f"license_test{timestamp}@example.com",
+        "company_phone": "123-456-7890",
+        "company_address": "123 License Test St",
+        "company_website": "https://licensetest.com",
+        "license_key": license_key,
+        "manager_name": "License Test Manager",
+        "manager_email": f"license_manager{timestamp}@example.com",
+        "manager_password": "Password123!",
+        "manager_phone": "123-456-7890",
+        "manager_department": "License Management"
+    }
+    
+    response = requests.post(f"{API_URL}/companies/register", json=company_data)
+    print_response(response)
+    
+    if expected_success:
+        if not assert_status_code(response, 200):
+            return None
+        
+        token_data = response.json()
+        assert_field_exists(token_data, "access_token")
+        assert_field_exists(token_data, "user")
+        assert_field_exists(token_data, "company")
+        
+        print(f"✅ Company registration successful with license key: {license_key}")
+        return token_data
+    else:
+        if not assert_status_code(response, 400):
+            return False
+        
+        print(f"✅ Company registration correctly rejected with invalid license key: {license_key}")
+        return True
+
+def test_license_assignment(manager_token, license_key, expected_success=True):
+    print_test_header(f"License Assignment - {license_key}")
+    
+    headers = {"Authorization": f"Bearer {manager_token}"}
+    
+    validation_data = {
+        "license_key": license_key
+    }
+    
+    response = requests.post(f"{API_URL}/licenses/assign", json=validation_data, headers=headers)
+    print_response(response)
+    
+    if expected_success:
+        if not assert_status_code(response, 200):
+            return False
+        
+        print(f"✅ License assignment successful for {license_key}")
+        return True
+    else:
+        if not assert_status_code(response, 400):
+            return False
+        
+        print(f"✅ License assignment correctly rejected for {license_key}")
+        return True
+
+def test_company_license_info(token):
+    print_test_header("Company License Info")
+    
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    response = requests.get(f"{API_URL}/licenses/company-info", headers=headers)
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return None
+    
+    data = response.json()
+    assert_field_exists(data, "has_license")
+    
+    if data["has_license"]:
+        assert_field_exists(data, "license_type")
+        assert_field_exists(data, "status")
+        assert_field_exists(data, "limits")
+        
+        # Check limits structure
+        limits = data["limits"]
+        assert_field_exists(limits, "users_within_limit")
+        assert_field_exists(limits, "vehicles_within_limit")
+        assert_field_exists(limits, "users_count")
+        assert_field_exists(limits, "vehicles_count")
+    
+    print("✅ Company license info retrieved successfully")
+    return data
+
+def test_admin_license_management(manager_token):
+    print_test_header("Admin License Management")
+    
+    headers = {"Authorization": f"Bearer {manager_token}"}
+    
+    # 1. Create a new license
+    license_data = {
+        "license_type": "trial",
+        "max_users": 3,
+        "max_vehicles": 5,
+        "expires_date": (datetime.utcnow() + timedelta(days=14)).isoformat(),
+        "notes": "Test license created via API"
+    }
+    
+    print("\nCreating a new license:")
+    response = requests.post(f"{API_URL}/admin/licenses", json=license_data, headers=headers)
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return None
+    
+    created_license = response.json()
+    license_id = created_license["id"]
+    license_key = created_license["license_key"]
+    
+    # 2. List all licenses
+    print("\nListing all licenses:")
+    response = requests.get(f"{API_URL}/admin/licenses", headers=headers)
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return None
+    
+    licenses = response.json()
+    if not any(license["id"] == license_id for license in licenses):
+        print("❌ Created license not found in licenses list")
+        return None
+    
+    print("✅ Created license found in licenses list")
+    
+    # 3. Revoke the license
+    print(f"\nRevoking license {license_id}:")
+    response = requests.delete(f"{API_URL}/admin/licenses/{license_id}", headers=headers)
+    print_response(response)
+    
+    if not assert_status_code(response, 200):
+        return None
+    
+    # 4. Verify license is revoked
+    response = requests.get(f"{API_URL}/admin/licenses", headers=headers)
+    if response.status_code == 200:
+        licenses = response.json()
+        revoked_license = next((license for license in licenses if license["id"] == license_id), None)
+        if revoked_license and revoked_license["status"] == "revoked":
+            print("✅ License was successfully revoked")
+        else:
+            print("❌ License was not properly revoked")
+            return None
+    
+    print("✅ Admin license management operations successful")
+    return license_key
+
+def test_license_limits(token, license_info):
+    print_test_header("License Limits Enforcement")
+    
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    # Extract limits from license info
+    limits = license_info["limits"]
+    max_users = limits.get("max_users")
+    max_vehicles = limits.get("max_vehicles")
+    current_users = limits["users_count"]
+    current_vehicles = limits["vehicles_count"]
+    
+    print(f"License limits: {max_users} users, {max_vehicles} vehicles")
+    print(f"Current usage: {current_users} users, {current_vehicles} vehicles")
+    
+    # Test user creation up to limit
+    if max_users is not None:
+        users_to_create = max(0, max_users - current_users)
+        print(f"\nCreating {users_to_create} users to reach limit:")
+        
+        user_ids = []
+        for i in range(users_to_create):
+            timestamp = int(time.time()) + i
+            user_data = {
+                "name": f"Limit Test User {i}",
+                "email": f"limit_user{timestamp}@example.com",
+                "password": "Password123!",
+                "role": "regular_user",
+                "department": "Testing"
+            }
+            
+            response = requests.post(f"{API_URL}/users", json=user_data, headers=headers)
+            if response.status_code == 200:
+                user_id = response.json()["id"]
+                user_ids.append(user_id)
+                print(f"✅ Created user {i+1}/{users_to_create}")
+            else:
+                print(f"❌ Failed to create user {i+1}/{users_to_create}")
+                print_response(response)
+        
+        # Try to create one more user (should fail)
+        if users_to_create > 0:
+            print("\nAttempting to create user beyond limit:")
+            timestamp = int(time.time()) + 1000
+            user_data = {
+                "name": "Beyond Limit User",
+                "email": f"beyond_limit{timestamp}@example.com",
+                "password": "Password123!",
+                "role": "regular_user",
+                "department": "Testing"
+            }
+            
+            response = requests.post(f"{API_URL}/users", json=user_data, headers=headers)
+            print_response(response)
+            
+            if assert_status_code(response, 403):
+                print("✅ User creation correctly blocked at license limit")
+            else:
+                print("❌ User creation was not blocked at license limit")
+    
+    # Test vehicle creation up to limit
+    if max_vehicles is not None:
+        vehicles_to_create = max(0, max_vehicles - current_vehicles)
+        print(f"\nCreating {vehicles_to_create} vehicles to reach limit:")
+        
+        vehicle_ids = []
+        for i in range(vehicles_to_create):
+            timestamp = int(time.time()) + i
+            vehicle_data = {
+                "make": f"Limit Test Make {i}",
+                "model": f"Limit Test Model {i}",
+                "year": 2023,
+                "license_plate": f"LIMIT-{timestamp}",
+                "vin": f"LIMIT{timestamp}",
+                "mileage": 5000 + i * 100,
+                "category": "sedan"
+            }
+            
+            response = requests.post(f"{API_URL}/cars", json=vehicle_data, headers=headers)
+            if response.status_code == 200:
+                vehicle_id = response.json()["id"]
+                vehicle_ids.append(vehicle_id)
+                print(f"✅ Created vehicle {i+1}/{vehicles_to_create}")
+            else:
+                print(f"❌ Failed to create vehicle {i+1}/{vehicles_to_create}")
+                print_response(response)
+        
+        # Try to create one more vehicle (should fail)
+        if vehicles_to_create > 0:
+            print("\nAttempting to create vehicle beyond limit:")
+            timestamp = int(time.time()) + 1000
+            vehicle_data = {
+                "make": "Beyond Limit Make",
+                "model": "Beyond Limit Model",
+                "year": 2023,
+                "license_plate": f"BEYOND-{timestamp}",
+                "vin": f"BEYOND{timestamp}",
+                "mileage": 5000,
+                "category": "sedan"
+            }
+            
+            response = requests.post(f"{API_URL}/cars", json=vehicle_data, headers=headers)
+            print_response(response)
+            
+            if assert_status_code(response, 403):
+                print("✅ Vehicle creation correctly blocked at license limit")
+            else:
+                print("❌ Vehicle creation was not blocked at license limit")
+    
+    print("✅ License limits enforcement test completed")
+    return True
+
+def run_licensing_system_tests():
+    print("\n🚀 Starting Licensing System Tests\n")
+    
+    # Sample license keys from the review request
+    sample_licenses = {
+        "TRIAL": "2CV1-09O9-1DE0-9YCC-1U4V",
+        "BASIC": "ZH06-RKDV-WJRB-RINZ-VZ8Q",
+        "PROFESSIONAL": "4RY4-WXV4-N6BE-UQY8-PWK6",
+        "ENTERPRISE": "7N2F-FWDZ-H2TS-V3G2-K5X6",
+        "TRIAL_SHORT": "6D6K-DAFG-RCP5-XKFK-FZGF",
+        "INVALID": "INVALID-KEY-TEST"
+    }
+    
+    # 1. Test license validation
+    print("\n=== Testing License Validation API ===")
+    
+    # Test with valid license keys
+    for license_type, license_key in sample_licenses.items():
+        if license_type != "INVALID":
+            result = test_license_validation(license_key, expected_valid=True)
+            if not result:
+                print(f"❌ License validation failed for {license_type} license")
+    
+    # Test with invalid license key
+    result = test_license_validation(sample_licenses["INVALID"], expected_valid=False)
+    if not result:
+        print("❌ Invalid license validation test failed")
+    
+    # Test with empty license key
+    result = test_license_validation("", expected_valid=False)
+    if not result:
+        print("❌ Empty license validation test failed")
+    
+    # 2. Test company registration with license
+    print("\n=== Testing Company Registration with License ===")
+    
+    # Register with TRIAL license
+    trial_registration = test_company_registration_with_license(sample_licenses["TRIAL"])
+    if not trial_registration:
+        print("❌ Company registration with TRIAL license failed")
+        return False
+    
+    trial_token = trial_registration["access_token"]
+    
+    # Try to register with the same license (should fail)
+    result = test_company_registration_with_license(sample_licenses["TRIAL"], expected_success=False)
+    if not result:
+        print("❌ Company registration with already assigned license test failed")
+    
+    # Try to register with invalid license (should fail)
+    result = test_company_registration_with_license(sample_licenses["INVALID"], expected_success=False)
+    if not result:
+        print("❌ Company registration with invalid license test failed")
+    
+    # 3. Test company license info
+    print("\n=== Testing Company License Info ===")
+    
+    license_info = test_company_license_info(trial_token)
+    if not license_info:
+        print("❌ Company license info test failed")
+        return False
+    
+    # 4. Test license assignment
+    print("\n=== Testing License Assignment ===")
+    
+    # Register another company with BASIC license
+    basic_registration = test_company_registration_with_license(sample_licenses["BASIC"])
+    if not basic_registration:
+        print("❌ Company registration with BASIC license failed")
+        return False
+    
+    basic_token = basic_registration["access_token"]
+    
+    # Try to assign already assigned license (should fail)
+    result = test_license_assignment(basic_token, sample_licenses["TRIAL"], expected_success=False)
+    if not result:
+        print("❌ License assignment with already assigned license test failed")
+    
+    # Try to assign invalid license (should fail)
+    result = test_license_assignment(basic_token, sample_licenses["INVALID"], expected_success=False)
+    if not result:
+        print("❌ License assignment with invalid license test failed")
+    
+    # 5. Test admin license management
+    print("\n=== Testing Admin License Management ===")
+    
+    new_license_key = test_admin_license_management(basic_token)
+    if not new_license_key:
+        print("❌ Admin license management test failed")
+        return False
+    
+    # 6. Test license limits enforcement
+    print("\n=== Testing License Limits Enforcement ===")
+    
+    # Register a company with TRIAL_SHORT license (has low limits)
+    short_registration = test_company_registration_with_license(sample_licenses["TRIAL_SHORT"])
+    if not short_registration:
+        print("❌ Company registration with TRIAL_SHORT license failed")
+        return False
+    
+    short_token = short_registration["access_token"]
+    
+    # Get license info
+    short_license_info = test_company_license_info(short_token)
+    if not short_license_info:
+        print("❌ Company license info test failed")
+        return False
+    
+    # Test limits
+    result = test_license_limits(short_token, short_license_info)
+    if not result:
+        print("❌ License limits enforcement test failed")
+        return False
+    
+    print("\n🏁 All licensing system tests completed successfully!\n")
+    return True
+
 if __name__ == "__main__":
     # Uncomment to run authentication tests
     # run_auth_tests()
     
-    # Run subscription removal tests
-    run_subscription_removal_tests()
+    # Uncomment to run subscription removal tests
+    # run_subscription_removal_tests()
+    
+    # Run licensing system tests
+    run_licensing_system_tests()
