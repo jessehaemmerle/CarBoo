@@ -1391,8 +1391,10 @@ const FleetDashboard = () => {
           </div>
         )}
         
-        {/* Other tabs would be implemented here */}
-        {activeTab !== 'dashboard' && (
+        {/* Other tabs content */}
+        {activeTab === 'licenses' && <LicenseManagement />}
+        
+        {activeTab !== 'dashboard' && activeTab !== 'licenses' && (
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">
               {tabs.find(tab => tab.id === activeTab)?.label}
