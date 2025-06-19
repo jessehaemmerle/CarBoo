@@ -670,11 +670,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Licensing System - Registration Form Update"
-    - "Licensing System - License Validation UI"
-    - "Licensing System - Admin License Management"
-    - "Licensing System - Translation Support"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
