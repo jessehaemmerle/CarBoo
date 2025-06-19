@@ -31,7 +31,7 @@ services:
     container_name: fleetmanager_backend
     restart: unless-stopped
     environment:
-      - MONGO_URL=mongodb://root:${MONGO_PASSWORD:-fleetmanager123}@mongodb:27017/fleetmanager?authSource=admin
+      - MONGO_URL=mongodb://root:${MONGO_PASSWORD:-fleetmanager123}@mongodb:27017/test_database?authSource=admin
       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
       - ENVIRONMENT=production
     ports:
