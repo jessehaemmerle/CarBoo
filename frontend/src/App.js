@@ -107,7 +107,7 @@ const AuthProvider = ({ children }) => {
   // Register company function
   const registerCompany = async (companyData) => {
     try {
-      const response = await fetch(`${API}/api/companies`, {
+      const response = await fetch(`${API}/api/companies/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
