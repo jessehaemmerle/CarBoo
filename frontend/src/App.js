@@ -912,7 +912,10 @@ const FleetDashboard = () => {
     { id: 'dashboard', label: t('dashboard.overview') },
     { id: 'cars', label: t('dashboard.vehicles') },
     { id: 'bookings', label: t('dashboard.bookings') },
-    ...(isManager ? [{ id: 'users', label: t('dashboard.users') }] : [])
+    ...(isManager ? [
+      { id: 'users', label: t('dashboard.users') },
+      { id: 'licenses', label: 'Licenses' }
+    ] : [])
   ];
 
   return (
