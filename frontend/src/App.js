@@ -211,6 +211,8 @@ const CompanyRegistrationForm = ({ onBack }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationError, setRegistrationError] = useState('');
+  const [licenseValidation, setLicenseValidation] = useState(null);
+  const [isValidatingLicense, setIsValidatingLicense] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
