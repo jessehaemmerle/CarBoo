@@ -194,6 +194,8 @@ class CompanyRegistration(BaseModel):
     company_phone: Optional[str] = None
     company_address: Optional[str] = None
     company_website: Optional[str] = None
+    # License info
+    license_key: str
     # Fleet Manager info
     manager_name: str
     manager_email: EmailStr
