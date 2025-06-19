@@ -201,6 +201,7 @@ const CompanyRegistrationForm = ({ onBack }) => {
     company_phone: '',
     company_address: '',
     company_website: '',
+    license_key: '', // Added license key field
     manager_name: '',
     manager_email: '',
     manager_password: '',
