@@ -617,14 +617,16 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Pricing Removal - Landing Page"
-    - "Pricing Removal - Navigation"
-    - "Pricing Removal - Company Registration"
-    - "Pricing Removal - Dashboard"
-    - "Multilingual Support - Implementation"
-    - "Multilingual Support - Language Selector"
-    - "Multilingual Support - Backend Integration"
-    - "Multilingual Support - Translation Coverage"
+    - "Licensing System - Database Models"
+    - "Licensing System - Core Functions"
+    - "Licensing System - API Endpoints"
+    - "Licensing System - Company Registration Integration"
+    - "Licensing System - Usage Limits Enforcement"
+    - "Licensing System - Sample License Generation"
+    - "Licensing System - Registration Form Update"
+    - "Licensing System - License Validation UI"
+    - "Licensing System - Admin License Management"
+    - "Licensing System - Translation Support"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
