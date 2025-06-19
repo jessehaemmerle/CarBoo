@@ -438,6 +438,71 @@ const CompanyRegistrationForm = ({ onBack }) => {
               </div>
             </div>
 
+            {/* License Information */}
+            <h3 className="text-lg font-medium text-gray-900 pt-4">License Information</h3>
+            
+            <div>
+              <label htmlFor="license_key" className="block text-sm font-medium text-gray-700">
+                License Key *
+              </label>
+              <div className="mt-1 flex">
+                <input
+                  id="license_key"
+                  name="license_key"
+                  type="text"
+                  placeholder="Enter your license key (e.g., XXXX-XXXX-XXXX-XXXX-XXXX)"
+                  value={formData.license_key}
+                  onChange={handleChange}
+                  className={`appearance-none block w-full px-3 py-2 border ${errors.license_key ? 'border-red-300' : 'border-gray-300'} rounded-l-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                />
+                <button
+                  type="button"
+                  onClick={validateLicenseKey}
+                  disabled={!formData.license_key.trim() || isValidatingLicense}
+                  className="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isValidatingLicense ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Validating...
+                    </>
+                  ) : (
+                    'Validate'
+                  )}
+                </button>
+              </div>
+              {errors.license_key && <p className="mt-2 text-sm text-red-600">{errors.license_key}</p>}
+              
+              {/* License validation feedback */}
+              {licenseValidation && (
+                <div className={`mt-2 p-3 rounded-md ${licenseValidation.valid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                  {licenseValidation.valid ? (
+                    <div className="text-green-800">
+                      <p className="font-medium">✅ Valid License</p>
+                      <p className="text-sm mt-1">Type: {licenseValidation.license_type.charAt(0).toUpperCase() + licenseValidation.license_type.slice(1)}</p>
+                      {licenseValidation.max_users && (
+                        <p className="text-sm">Max Users: {licenseValidation.max_users}</p>
+                      )}
+                      {licenseValidation.max_vehicles && (
+                        <p className="text-sm">Max Vehicles: {licenseValidation.max_vehicles}</p>
+                      )}
+                      {licenseValidation.expires_date && (
+                        <p className="text-sm">Expires: {new Date(licenseValidation.expires_date).toLocaleDateString()}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-red-800">
+                      <p className="font-medium">❌ Invalid License</p>
+                      <p className="text-sm mt-1">{licenseValidation.error}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Manager Information */}
             <h3 className="text-lg font-medium text-gray-900 pt-4">{t('registration.managerInfo')}</h3>
             
