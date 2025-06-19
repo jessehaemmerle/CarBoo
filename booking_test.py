@@ -7,7 +7,7 @@ import random
 import string
 
 # Get the backend URL
-BACKEND_URL = "https://89b657d5-9251-48b5-ad3f-2889cdb31388.preview.emergentagent.com"
+BACKEND_URL = "https://69781433-d1c7-48a6-be9f-61585bc307c7.preview.emergentagent.com"
 API_URL = f"{BACKEND_URL}/api"
 
 # Helper functions
