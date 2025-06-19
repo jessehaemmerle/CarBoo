@@ -877,6 +877,18 @@ async def get_all_users(current_manager: User = Depends(get_current_manager)):
 
 @api_router.post("/users", response_model=UserResponse)
 async def create_user_by_manager(user_data: UserCreate, current_manager: User = Depends(get_current_manager)):
+    # Check license limits
+    license_info = await get_company_license_info(current_manager.company_id)
+    if license_info and license_info.get("limits", {}).get("max_users"):
+        current_users = license_info["limits"]["users_count"]
+        max_users = license_info["limits"]["max_users"]
+        
+        if current_users >= max_users:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"License limit reached. Maximum users allowed: {max_users}"
+            )
+    
     # Check if user already exists
     existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
