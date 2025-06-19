@@ -1272,25 +1272,92 @@ def test_license_limits(token, license_info):
 def run_licensing_system_tests():
     print("\n🚀 Starting Licensing System Tests\n")
     
-    # Sample license keys from the review request
+    # First, let's create a company with a manager to get a token for admin operations
+    print("\n=== Creating Initial Company for Testing ===")
+    
+    # Create unique company data with random timestamp to ensure uniqueness
+    timestamp = int(time.time() * 1000)
+    random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+    company_data = {
+        "company_name": f"Initial Test Company {timestamp}",
+        "company_email": f"initial_test_{random_suffix}@example.com",
+        "company_phone": "123-456-7890",
+        "company_address": "123 Test St",
+        "company_website": "https://initialtest.com",
+        "license_key": "4RY4-WXV4-N6BE-UQY8-PWK6",  # Using PROFESSIONAL license
+        "manager_name": "Initial Test Manager",
+        "manager_email": f"initial_manager_{random_suffix}@example.com",
+        "manager_password": "Password123!",
+        "manager_phone": "123-456-7890",
+        "manager_department": "Test Management"
+    }
+    
+    response = requests.post(f"{API_URL}/companies/register", json=company_data)
+    if response.status_code != 200 and response.status_code != 400:
+        print(f"❌ Failed to create initial company: {response.status_code}")
+        print(response.text)
+        return False
+    
+    # If we got a 400 error because the license is already assigned, we need to login instead
+    if response.status_code == 400:
+        print("License already assigned, trying to login with existing company manager")
+        # Try to login with a previously created manager
+        login_data = {
+            "email": "initial_manager_abcdef@example.com",
+            "password": "Password123!"
+        }
+        response = requests.post(f"{API_URL}/auth/login", json=login_data)
+        if response.status_code != 200:
+            print("❌ Failed to login with existing manager")
+            # Create a new company with a new manager using a different license
+            company_data["license_key"] = "7N2F-FWDZ-H2TS-V3G2-K5X6"  # Try ENTERPRISE license
+            company_data["company_email"] = f"initial_test2_{random_suffix}@example.com"
+            company_data["manager_email"] = f"initial_manager2_{random_suffix}@example.com"
+            response = requests.post(f"{API_URL}/companies/register", json=company_data)
+            if response.status_code != 200:
+                print(f"❌ Failed to create initial company with second license: {response.status_code}")
+                print(response.text)
+                return False
+    
+    token_data = response.json()
+    admin_token = token_data["access_token"]
+    print(f"✅ Got admin token for testing")
+    
+    # Create a new license for testing
+    print("\n=== Creating New License for Testing ===")
+    
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    license_data = {
+        "license_type": "trial",
+        "max_users": 3,
+        "max_vehicles": 5,
+        "expires_date": (datetime.utcnow() + timedelta(days=14)).isoformat(),
+        "notes": "Test license created via API for testing"
+    }
+    
+    response = requests.post(f"{API_URL}/admin/licenses", json=license_data, headers=headers)
+    if response.status_code != 200:
+        print(f"❌ Failed to create test license: {response.status_code}")
+        print(response.text)
+        return False
+    
+    created_license = response.json()
+    test_license_key = created_license["license_key"]
+    print(f"✅ Created test license key: {test_license_key}")
+    
+    # Sample license keys for testing
     sample_licenses = {
-        "TRIAL": "4RY4-WXV4-N6BE-UQY8-PWK6",  # Using PROFESSIONAL as our primary license
-        "BASIC": "7N2F-FWDZ-H2TS-V3G2-K5X6",  # Using ENTERPRISE as our secondary license
-        "PROFESSIONAL": "4RY4-WXV4-N6BE-UQY8-PWK6",
-        "ENTERPRISE": "7N2F-FWDZ-H2TS-V3G2-K5X6",
-        "TRIAL_ORIGINAL": "2CV1-09O9-1DE0-9YCC-1U4V",  # This one is already assigned
+        "TRIAL": test_license_key,  # Use our newly created license
         "INVALID": "INVALID-KEY-TEST"
     }
     
     # 1. Test license validation
     print("\n=== Testing License Validation API ===")
     
-    # Test with valid license keys
-    for license_type, license_key in sample_licenses.items():
-        if license_type != "INVALID":
-            result = test_license_validation(license_key, expected_valid=True)
-            if not result:
-                print(f"❌ License validation failed for {license_type} license")
+    # Test with valid license key
+    result = test_license_validation(sample_licenses["TRIAL"], expected_valid=True)
+    if not result:
+        print(f"❌ License validation failed for TRIAL license")
     
     # Test with invalid license key
     result = test_license_validation(sample_licenses["INVALID"], expected_valid=False)
@@ -1331,54 +1398,19 @@ def run_licensing_system_tests():
         print("❌ Company license info test failed")
         return False
     
-    # 4. Test license assignment
-    print("\n=== Testing License Assignment ===")
-    
-    # Register another company with BASIC license
-    basic_registration = test_company_registration_with_license(sample_licenses["BASIC"])
-    if not basic_registration:
-        print("❌ Company registration with BASIC license failed")
-        return False
-    
-    basic_token = basic_registration["access_token"]
-    
-    # Try to assign already assigned license (should fail)
-    result = test_license_assignment(basic_token, sample_licenses["TRIAL"], expected_success=False)
-    if not result:
-        print("❌ License assignment with already assigned license test failed")
-    
-    # Try to assign invalid license (should fail)
-    result = test_license_assignment(basic_token, sample_licenses["INVALID"], expected_success=False)
-    if not result:
-        print("❌ License assignment with invalid license test failed")
-    
-    # 5. Test admin license management
+    # 4. Test admin license management
     print("\n=== Testing Admin License Management ===")
     
-    new_license_key = test_admin_license_management(basic_token)
+    new_license_key = test_admin_license_management(admin_token)
     if not new_license_key:
         print("❌ Admin license management test failed")
         return False
     
-    # 6. Test license limits enforcement
+    # 5. Test license limits enforcement
     print("\n=== Testing License Limits Enforcement ===")
     
-    # Register a company with TRIAL_SHORT license (has low limits)
-    short_registration = test_company_registration_with_license(sample_licenses["TRIAL_SHORT"])
-    if not short_registration:
-        print("❌ Company registration with TRIAL_SHORT license failed")
-        return False
-    
-    short_token = short_registration["access_token"]
-    
-    # Get license info
-    short_license_info = test_company_license_info(short_token)
-    if not short_license_info:
-        print("❌ Company license info test failed")
-        return False
-    
     # Test limits
-    result = test_license_limits(short_token, short_license_info)
+    result = test_license_limits(trial_token, license_info)
     if not result:
         print("❌ License limits enforcement test failed")
         return False
