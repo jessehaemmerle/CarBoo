@@ -292,6 +292,11 @@ const CompanyRegistrationForm = ({ onBack }) => {
     if (!formData.company_email) newErrors.company_email = t('validation.required');
     else if (!/\S+@\S+\.\S+/.test(formData.company_email)) newErrors.company_email = t('validation.invalidEmail');
     
+    if (!formData.license_key) newErrors.license_key = 'License key is required';
+    else if (!licenseValidation || !licenseValidation.valid) {
+      newErrors.license_key = 'Please validate your license key';
+    }
+    
     if (!formData.manager_name) newErrors.manager_name = t('validation.required');
     if (!formData.manager_email) newErrors.manager_email = t('validation.required');
     else if (!/\S+@\S+\.\S+/.test(formData.manager_email)) newErrors.manager_email = t('validation.invalidEmail');
