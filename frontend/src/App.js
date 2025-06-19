@@ -221,6 +221,67 @@ const CompanyRegistrationForm = ({ onBack }) => {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+    
+    // Clear license validation when license key is changed
+    if (name === 'license_key') {
+      setLicenseValidation(null);
+    }
+  };
+
+  // Validate license key
+  const validateLicenseKey = async () => {
+    if (!formData.license_key.trim()) {
+      setErrors(prev => ({ ...prev, license_key: 'License key is required' }));
+      return;
+    }
+
+    setIsValidatingLicense(true);
+    setErrors(prev => ({ ...prev, license_key: '' }));
+
+    try {
+      const response = await fetch(`${API}/api/licenses/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ license_key: formData.license_key })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.valid) {
+        if (result.already_assigned) {
+          setLicenseValidation({
+            valid: false,
+            error: `License is already assigned to ${result.company_name}`
+          });
+          setErrors(prev => ({ ...prev, license_key: `License is already assigned to ${result.company_name}` }));
+        } else {
+          setLicenseValidation({
+            valid: true,
+            license_type: result.license_type,
+            max_users: result.max_users,
+            max_vehicles: result.max_vehicles,
+            expires_date: result.expires_date
+          });
+        }
+      } else {
+        setLicenseValidation({
+          valid: false,
+          error: result.detail || 'Invalid license key'
+        });
+        setErrors(prev => ({ ...prev, license_key: result.detail || 'Invalid license key' }));
+      }
+    } catch (error) {
+      console.error('License validation error:', error);
+      setLicenseValidation({
+        valid: false,
+        error: 'Failed to validate license key'
+      });
+      setErrors(prev => ({ ...prev, license_key: 'Failed to validate license key' }));
+    } finally {
+      setIsValidatingLicense(false);
+    }
   };
 
   const validateForm = () => {
