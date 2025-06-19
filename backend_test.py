@@ -1272,56 +1272,33 @@ def test_license_limits(token, license_info):
 def run_licensing_system_tests():
     print("\n🚀 Starting Licensing System Tests\n")
     
-    # First, let's create a company with a manager to get a token for admin operations
-    print("\n=== Creating Initial Company for Testing ===")
+    # First, let's try to login with a previously created manager
+    print("\n=== Getting Admin Token for Testing ===")
     
-    # Create unique company data with random timestamp to ensure uniqueness
-    timestamp = int(time.time() * 1000)
-    random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-    company_data = {
-        "company_name": f"Initial Test Company {timestamp}",
-        "company_email": f"initial_test_{random_suffix}@example.com",
-        "company_phone": "123-456-7890",
-        "company_address": "123 Test St",
-        "company_website": "https://initialtest.com",
-        "license_key": "4RY4-WXV4-N6BE-UQY8-PWK6",  # Using PROFESSIONAL license
-        "manager_name": "Initial Test Manager",
-        "manager_email": f"initial_manager_{random_suffix}@example.com",
-        "manager_password": "Password123!",
-        "manager_phone": "123-456-7890",
-        "manager_department": "Test Management"
-    }
+    # Try to login with a previously created manager
+    # We'll try a few different emails that might have been created in previous test runs
+    admin_token = None
+    test_emails = [
+        "license_manager_ysg9yodc@example.com",
+        "license_manager_kttkkbwm@example.com",
+        "license_manager_6ai7pwe2@example.com",
+        "license_manager_z1gbcq9d@example.com"
+    ]
     
-    response = requests.post(f"{API_URL}/companies/register", json=company_data)
-    if response.status_code != 200 and response.status_code != 400:
-        print(f"❌ Failed to create initial company: {response.status_code}")
-        print(response.text)
-        return False
-    
-    # If we got a 400 error because the license is already assigned, we need to login instead
-    if response.status_code == 400:
-        print("License already assigned, trying to login with existing company manager")
-        # Try to login with a previously created manager
+    for email in test_emails:
         login_data = {
-            "email": "initial_manager_abcdef@example.com",
+            "email": email,
             "password": "Password123!"
         }
         response = requests.post(f"{API_URL}/auth/login", json=login_data)
-        if response.status_code != 200:
-            print("❌ Failed to login with existing manager")
-            # Create a new company with a new manager using a different license
-            company_data["license_key"] = "7N2F-FWDZ-H2TS-V3G2-K5X6"  # Try ENTERPRISE license
-            company_data["company_email"] = f"initial_test2_{random_suffix}@example.com"
-            company_data["manager_email"] = f"initial_manager2_{random_suffix}@example.com"
-            response = requests.post(f"{API_URL}/companies/register", json=company_data)
-            if response.status_code != 200:
-                print(f"❌ Failed to create initial company with second license: {response.status_code}")
-                print(response.text)
-                return False
+        if response.status_code == 200:
+            admin_token = response.json()["access_token"]
+            print(f"✅ Successfully logged in as {email}")
+            break
     
-    token_data = response.json()
-    admin_token = token_data["access_token"]
-    print(f"✅ Got admin token for testing")
+    if not admin_token:
+        print("❌ Failed to login with any existing manager")
+        return False
     
     # Create a new license for testing
     print("\n=== Creating New License for Testing ===")
