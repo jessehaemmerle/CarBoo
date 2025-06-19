@@ -125,6 +125,45 @@ class CompanyResponse(BaseModel):
     created_at: datetime
     stats: Optional[dict] = None
 
+# License Models
+class License(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    license_key: str
+    company_id: Optional[str] = None  # None for unassigned licenses
+    license_type: LicenseType
+    status: LicenseStatus = LicenseStatus.ACTIVE
+    max_users: Optional[int] = None
+    max_vehicles: Optional[int] = None
+    issued_date: datetime = Field(default_factory=datetime.utcnow)
+    expires_date: Optional[datetime] = None
+    activated_date: Optional[datetime] = None
+    created_by: Optional[str] = None  # Admin user who created it
+    notes: Optional[str] = None
+
+class LicenseCreate(BaseModel):
+    license_type: LicenseType
+    max_users: Optional[int] = None
+    max_vehicles: Optional[int] = None
+    expires_date: Optional[datetime] = None
+    notes: Optional[str] = None
+
+class LicenseValidation(BaseModel):
+    license_key: str
+
+class LicenseResponse(BaseModel):
+    id: str
+    license_key: str
+    company_id: Optional[str] = None
+    license_type: LicenseType
+    status: LicenseStatus
+    max_users: Optional[int] = None
+    max_vehicles: Optional[int] = None
+    issued_date: datetime
+    expires_date: Optional[datetime] = None
+    activated_date: Optional[datetime] = None
+    company_name: Optional[str] = None
+    notes: Optional[str] = None
+
 # Authentication Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
