@@ -1274,11 +1274,11 @@ def run_licensing_system_tests():
     
     # Sample license keys from the review request
     sample_licenses = {
-        "TRIAL": "2CV1-09O9-1DE0-9YCC-1U4V",
+        "TRIAL": "6D6K-DAFG-RCP5-XKFK-FZGF",  # Using TRIAL_SHORT as our primary TRIAL license
         "BASIC": "ZH06-RKDV-WJRB-RINZ-VZ8Q",
         "PROFESSIONAL": "4RY4-WXV4-N6BE-UQY8-PWK6",
         "ENTERPRISE": "7N2F-FWDZ-H2TS-V3G2-K5X6",
-        "TRIAL_SHORT": "6D6K-DAFG-RCP5-XKFK-FZGF",
+        "TRIAL_ORIGINAL": "2CV1-09O9-1DE0-9YCC-1U4V",  # This one might be already assigned
         "INVALID": "INVALID-KEY-TEST"
     }
     
