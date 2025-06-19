@@ -359,6 +359,88 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+# License Helper Functions
+import secrets
+import string
+
+def generate_license_key() -> str:
+    """Generate a unique license key"""
+    # Generate a 20-character license key with format XXXX-XXXX-XXXX-XXXX-XXXX
+    chars = string.ascii_uppercase + string.digits
+    key_parts = []
+    for _ in range(5):
+        part = ''.join(secrets.choice(chars) for _ in range(4))
+        key_parts.append(part)
+    return '-'.join(key_parts)
+
+async def validate_license_key(license_key: str) -> Optional[dict]:
+    """Validate a license key and return license info if valid"""
+    license_doc = await db.licenses.find_one({"license_key": license_key})
+    
+    if not license_doc:
+        return None
+    
+    # Check if license is active
+    if license_doc["status"] != LicenseStatus.ACTIVE:
+        return None
+    
+    # Check if license has expired
+    if license_doc.get("expires_date"):
+        if datetime.utcnow() > license_doc["expires_date"]:
+            # Mark license as expired
+            await db.licenses.update_one(
+                {"license_key": license_key},
+                {"$set": {"status": LicenseStatus.EXPIRED}}
+            )
+            return None
+    
+    return license_doc
+
+async def check_license_limits(company_id: str, license_doc: dict) -> dict:
+    """Check if company is within license limits"""
+    limits = {
+        "users_within_limit": True,
+        "vehicles_within_limit": True,
+        "users_count": 0,
+        "vehicles_count": 0,
+        "max_users": license_doc.get("max_users"),
+        "max_vehicles": license_doc.get("max_vehicles")
+    }
+    
+    # Check user count
+    users_count = await db.users.count_documents({"company_id": company_id, "is_active": True})
+    limits["users_count"] = users_count
+    
+    if license_doc.get("max_users"):
+        limits["users_within_limit"] = users_count <= license_doc["max_users"]
+    
+    # Check vehicle count
+    vehicles_count = await db.cars.count_documents({"company_id": company_id})
+    limits["vehicles_count"] = vehicles_count
+    
+    if license_doc.get("max_vehicles"):
+        limits["vehicles_within_limit"] = vehicles_count <= license_doc["max_vehicles"]
+    
+    return limits
+
+async def get_company_license_info(company_id: str) -> Optional[dict]:
+    """Get license information for a company"""
+    company = await db.companies.find_one({"id": company_id})
+    if not company or not company.get("license_id"):
+        return None
+    
+    license_doc = await db.licenses.find_one({"id": company["license_id"]})
+    if not license_doc:
+        return None
+    
+    # Check limits
+    limits = await check_license_limits(company_id, license_doc)
+    
+    return {
+        **license_doc,
+        "limits": limits
+    }
+
 def create_company_slug(name: str) -> str:
     """Create a unique slug from company name"""
     import re
