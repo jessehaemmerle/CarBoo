@@ -676,11 +676,19 @@ async def revoke_license(license_id: str, current_user: User = Depends(get_curre
 @api_router.get("/health")
 async def health_check():
     """Health check endpoint for monitoring and load balancers"""
+    try:
+        # Test database connectivity
+        await db.command("ping")
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"disconnected: {str(e)}"
+    
     return {
-        "status": "healthy",
+        "status": "healthy" if db_status == "connected" else "unhealthy",
         "timestamp": datetime.utcnow().isoformat(),
         "service": "FleetManager Backend API",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "database": db_status
     }
 
 @api_router.post("/companies/register", response_model=Token)
