@@ -12,7 +12,7 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Check if Docker Compose is installed
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
     echo "❌ Docker Compose is not installed. Please install Docker Compose first."
     echo "Visit: https://docs.docker.com/compose/install/"
     exit 1
@@ -67,7 +67,7 @@ show_help() {
 case "${1:-help}" in
     "dev")
         echo "🚀 Starting development environment..."
-        docker-compose -f docker-compose.dev.yml up --build
+        docker compose -f docker-compose.dev.yml up --build
         ;;
     "prod")
         echo "🚀 Starting production environment..."
@@ -93,13 +93,13 @@ case "${1:-help}" in
         fi
         
         # Validate Docker Compose configuration
-        if ! docker-compose config &> /dev/null; then
+        if ! docker compose config &> /dev/null; then
             echo "❌ Docker Compose configuration is invalid!"
             echo "Run './docker-troubleshoot.sh check' for detailed diagnostics"
             exit 1
         fi
         
-        docker-compose up --build -d
+        docker compose up --build -d
         
         # Wait for services to start and check health
         echo "⏳ Waiting for services to start..."
@@ -107,7 +107,7 @@ case "${1:-help}" in
         
         # Check container health
         echo "🔍 Checking container health..."
-        unhealthy_containers=$(docker-compose ps --filter "health=unhealthy" -q)
+        unhealthy_containers=$(docker compose ps --filter "health=unhealthy" -q)
         if [ ! -z "$unhealthy_containers" ]; then
             echo "⚠️  Some containers are unhealthy. Run './docker-troubleshoot.sh fix-backend' for diagnosis"
         fi
@@ -120,28 +120,28 @@ case "${1:-help}" in
         ;;
     "stop")
         echo "🛑 Stopping all services..."
-        docker-compose down
-        docker-compose -f docker-compose.dev.yml down
+        docker compose down
+        docker compose -f docker-compose.dev.yml down
         ;;
     "restart")
         echo "🔄 Restarting services..."
-        docker-compose restart
+        docker compose restart
         ;;
     "logs")
         echo "📋 Viewing logs (press Ctrl+C to exit)..."
-        docker-compose logs -f
+        docker compose logs -f
         ;;
     "status")
         echo "📊 Services status:"
-        docker-compose ps
+        docker compose ps
         ;;
     "clean")
         echo "🧹 Cleaning up containers and volumes..."
         read -p "⚠️  This will delete all data. Are you sure? (y/N): " -n 1 -r
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            docker-compose down -v
-            docker-compose -f docker-compose.dev.yml down -v
+            docker compose down -v
+            docker compose -f docker-compose.dev.yml down -v
             docker system prune -f
             echo "✅ Cleanup completed!"
         else
@@ -157,8 +157,8 @@ case "${1:-help}" in
         mkdir -p backups
         
         # Backup MongoDB
-        docker-compose exec -T mongodb mongodump --uri="mongodb://root:$(grep MONGO_PASSWORD .env | cut -d'=' -f2)@localhost:27017/fleetmanager?authSource=admin" --out /data/backup
-        docker cp $(docker-compose ps -q mongodb):/data/backup ./backups/backup_${timestamp}
+        docker compose exec -T mongodb mongodump --uri="mongodb://root:$(grep MONGO_PASSWORD .env | cut -d'=' -f2)@localhost:27017/fleetmanager?authSource=admin" --out /data/backup
+        docker cp $(docker compose ps -q mongodb):/data/backup ./backups/backup_${timestamp}
         
         # Create compressed archive
         cd backups
