@@ -26,7 +26,8 @@ services:
     restart: unless-stopped
     environment:
       - MONGO_URL=mongodb://root:${MONGO_PASSWORD:-fleetmanager123}@mongodb:27017/test_database?authSource=admin
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-for-development}
+      - DB_NAME=test_database
+      - JWT_SECRET_KEY=${JWT_SECRET:-your-super-secret-jwt-key-for-development}
       - ENVIRONMENT=development
     ports:
       - "8001:8001"
