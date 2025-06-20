@@ -72,14 +72,51 @@ case "${1:-help}" in
     "prod")
         echo "🚀 Starting production environment..."
         if [ ! -f .env ]; then
-            echo "❌ .env file not found. Please create it first!"
+            echo "📝 Creating .env file from template..."
+            if [ -f .env.example ]; then
+                cp .env.example .env
+                
+                # Generate secure passwords
+                MONGO_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+                JWT_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | cut -c1-50)
+                
+                # Update .env file
+                sed -i "s/your-secure-mongodb-password-here/$MONGO_PASSWORD/g" .env
+                sed -i "s/your-super-secure-jwt-secret-key-minimum-32-characters-long/$JWT_SECRET/g" .env
+                sed -i "s/your-server-ip/localhost/g" .env
+                
+                echo "✅ .env file created with secure passwords"
+            else
+                echo "❌ .env.example template not found!"
+                exit 1
+            fi
+        fi
+        
+        # Validate Docker Compose configuration
+        if ! docker-compose config &> /dev/null; then
+            echo "❌ Docker Compose configuration is invalid!"
+            echo "Run './docker-troubleshoot.sh check' for detailed diagnostics"
             exit 1
         fi
+        
         docker-compose up --build -d
+        
+        # Wait for services to start and check health
+        echo "⏳ Waiting for services to start..."
+        sleep 30
+        
+        # Check container health
+        echo "🔍 Checking container health..."
+        unhealthy_containers=$(docker-compose ps --filter "health=unhealthy" -q)
+        if [ ! -z "$unhealthy_containers" ]; then
+            echo "⚠️  Some containers are unhealthy. Run './docker-troubleshoot.sh fix-backend' for diagnosis"
+        fi
+        
         echo "✅ Production environment started!"
         echo "🌐 Frontend: http://localhost:3000"
         echo "🚀 Backend API: http://localhost:8001"
         echo "📊 API Documentation: http://localhost:8001/docs"
+        echo "🔧 For troubleshooting: ./docker-troubleshoot.sh"
         ;;
     "stop")
         echo "🛑 Stopping all services..."
