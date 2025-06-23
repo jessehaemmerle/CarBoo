@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # MongoDB Database
   mongodb:
     image: mongo:7.0
     container_name: fleetmanager_mongodb_prod
@@ -23,7 +22,6 @@ services:
       retries: 3
       start_period: 40s
 
-  # Backend API
   backend:
     build:
       context: ./backend
@@ -48,7 +46,6 @@ services:
       retries: 3
       start_period: 60s
 
-  # Frontend Web App
   frontend:
     build:
       context: ./frontend
@@ -58,7 +55,7 @@ services:
     container_name: fleetmanager_frontend_prod
     restart: unless-stopped
     ports:
-      - "80:80"                # Host‐Port 80 auf Container‐Port 80
+      - "8080:80"               # Host‐Port 8080 → Container‐Port 80
     depends_on:
       backend:
         condition: service_healthy
