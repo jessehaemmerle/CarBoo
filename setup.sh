@@ -107,7 +107,7 @@ case "${1:-help}" in
         
         # Check container health
         echo "🔍 Checking container health..."
-        unhealthy_containers=$(docker compose ps --filter "health=unhealthy" -q)
+        unhealthy_containers=$(docker ps --filter "health=unhealthy" --filter "name=fleetmanager_" -q)
         if [ ! -z "$unhealthy_containers" ]; then
             echo "⚠️  Some containers are unhealthy. Run './docker-troubleshoot.sh fix-backend' for diagnosis"
         fi
