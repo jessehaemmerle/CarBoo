@@ -1,6 +1,7 @@
-version: '3.8'
+version: '3.8'  # kann bleiben, Compose V2 ignoriert es nur mit Warnung
 
 services:
+  # MongoDB
   mongodb:
     image: mongo:7.0
     container_name: fleetmanager_mongodb_prod
@@ -22,6 +23,7 @@ services:
       retries: 3
       start_period: 40s
 
+  # Backend
   backend:
     build:
       context: ./backend
@@ -44,9 +46,10 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 60s
+      retries: 5
+      start_period: 120s
 
+  # Frontend
   frontend:
     build:
       context: ./frontend
@@ -55,8 +58,9 @@ services:
         - REACT_APP_BACKEND_URL=${BACKEND_URL}
     container_name: fleetmanager_frontend_prod
     restart: unless-stopped
+    # Port-Mapping hier über ENV-Var
     ports:
-      - "8080:80"               # Host‐Port 8080 → Container‐Port 80
+      - "${FRONTEND_HOST_PORT:-8080}:80"
     depends_on:
       backend:
         condition: service_healthy
@@ -66,7 +70,7 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 60s
 
 volumes:
