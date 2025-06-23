@@ -10,28 +10,18 @@ RUN yarn build
 
 # — Production stage —
 FROM nginx:alpine
-
-# curl für Healthchecks
 RUN apk add --no-cache curl
 
-# React-Build kopieren
 COPY --from=builder /app/build /usr/share/nginx/html
-
-# eigene nginx.conf nutzen
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Berechtigungen
 RUN chown -R nginx:nginx /usr/share/nginx/html \
     && chown -R nginx:nginx /var/cache/nginx \
     && chown -R nginx:nginx /var/log/nginx \
     && chown -R nginx:nginx /etc/nginx/conf.d
 
-# Healthcheck auf neuen /health-Endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost/health || exit 1
 
-# Port 80 nutzen
 EXPOSE 80
-
-# NGINX im Vordergrund
 CMD ["nginx", "-g", "daemon off;"]
