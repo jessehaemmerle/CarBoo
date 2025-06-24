@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # --- MongoDB ---
   mongodb:
     image: mongo:7.0
     container_name: fleetmanager_mongodb_prod
@@ -17,11 +16,18 @@ services:
     networks:
       - fleetmanager_network_prod
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      # Jetzt mit Auth: Benutzer und Passwort aus den ENV-Vars
+      test: >
+        ["CMD-SHELL",
+         "mongosh -u $MONGO_INITDB_ROOT_USERNAME \
+                   -p $MONGO_INITDB_ROOT_PASSWORD \
+                   --authenticationDatabase admin \
+                   --eval \"db.adminCommand('ping')\""]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 40s
+
 
   # --- Backend ---
   backend:
