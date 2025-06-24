@@ -218,7 +218,51 @@ case "${1:-help}" in
         
         print_info "Starting Docker production environment..."
         docker-compose down || true
-        docker-compose up --build -d
+        
+        # Try main compose first, fall back to alternatives if MongoDB health issues
+        echo ""
+        print_info "Starting services with health checks..."
+        if ! docker-compose up --build -d; then
+            print_warning "Startup failed. This might be due to MongoDB health check issues."
+            echo ""
+            echo "🔧 Alternative startup options:"
+            echo "1. Use TCP-based health checks (recommended)"
+            echo "2. Use no health check dependencies"
+            echo "3. Debug MongoDB health issues"
+            echo "4. Continue with current setup"
+            echo ""
+            read -p "Choose option (1-4): " health_choice
+            
+            case $health_choice in
+                1)
+                    print_info "Using TCP-based health checks..."
+                    docker-compose down || true
+                    docker-compose -f docker-compose-tcp-health.yml up --build -d
+                    ;;
+                2)
+                    print_info "Using simplified startup without health dependencies..."
+                    docker-compose down || true
+                    docker-compose -f docker-compose-no-health.yml up --build -d
+                    ;;
+                3)
+                    print_info "Starting MongoDB health debug..."
+                    if [ -f "./debug-mongodb-health.sh" ]; then
+                        ./debug-mongodb-health.sh
+                    else
+                        print_error "Debug script not found"
+                    fi
+                    echo "See MONGODB_HEALTH_TROUBLESHOOTING.md for detailed help"
+                    exit 1
+                    ;;
+                4)
+                    print_info "Continuing with current setup..."
+                    ;;
+                *)
+                    print_error "Invalid choice"
+                    exit 1
+                    ;;
+            esac
+        fi
         
         print_status "Docker production environment started!"
         echo ""
@@ -226,6 +270,12 @@ case "${1:-help}" in
         print_info "Frontend: http://localhost:80"
         print_info "Backend API: http://localhost:8001"
         print_info "API Docs: http://localhost:8001/docs"
+        
+        # Check if services are healthy
+        sleep 5
+        if docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "unhealthy"; then
+            print_warning "Some services may be unhealthy. Run './debug-mongodb-health.sh' for help"
+        fi
         ;;
         
     "supervisor")
