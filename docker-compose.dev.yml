@@ -17,7 +17,7 @@ services:
     networks:
       - fleetmanager_network_dev
     healthcheck:
-      test: ["CMD", "mongosh", "localhost:27017/test", "--quiet", "--eval", "quit(db.runCommand('ping').ok ? 0 : 2)"]
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
