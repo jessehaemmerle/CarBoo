@@ -1,7 +1,7 @@
-version: '3.8'  # kann bleiben, Compose V2 ignoriert es nur mit Warnung
+version: '3.8'
 
 services:
-  # MongoDB
+  # --- MongoDB ---
   mongodb:
     image: mongo:7.0
     container_name: fleetmanager_mongodb_prod
@@ -9,7 +9,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-      MONGO_INITDB_DATABASE: fleetmanager
+      MONGO_INITDB_DATABASE: ${DB_NAME}
     ports:
       - "27017:27017"
     volumes:
@@ -23,7 +23,7 @@ services:
       retries: 3
       start_period: 40s
 
-  # Backend
+  # --- Backend ---
   backend:
     build:
       context: ./backend
@@ -31,10 +31,10 @@ services:
     container_name: fleetmanager_backend_prod
     restart: unless-stopped
     environment:
-      - MONGO_URL=mongodb://root:${MONGO_PASSWORD}@mongodb:27017/fleetmanager?authSource=admin
+      - MONGO_URL=mongodb://root:${MONGO_PASSWORD}@mongodb:27017/${DB_NAME}?authSource=admin
       - JWT_SECRET=${JWT_SECRET}
       - ENVIRONMENT=production
-      - DB_NAME=fleetmanager
+      - DB_NAME=${DB_NAME}
     ports:
       - "8001:8001"
     depends_on:
@@ -49,7 +49,7 @@ services:
       retries: 5
       start_period: 120s
 
-  # Frontend
+  # --- Frontend ---
   frontend:
     build:
       context: ./frontend
@@ -58,9 +58,8 @@ services:
         - REACT_APP_BACKEND_URL=${BACKEND_URL}
     container_name: fleetmanager_frontend_prod
     restart: unless-stopped
-    # Port-Mapping hier über ENV-Var
     ports:
-      - "${FRONTEND_HOST_PORT:-8080}:80"
+      - "${FRONTEND_HOST_PORT}:80"
     depends_on:
       backend:
         condition: service_healthy
@@ -75,7 +74,6 @@ services:
 
 volumes:
   mongodb_data_prod:
-    driver: local
 
 networks:
   fleetmanager_network_prod:
