@@ -9,7 +9,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-fleetmanager123}
-      MONGO_INITDB_DATABASE: fleetmanager
+      MONGO_INITDB_DATABASE: ${DB_NAME:-fleetmanager}
     ports:
       - "27017:27017"
     volumes:
