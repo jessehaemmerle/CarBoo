@@ -321,6 +321,57 @@ case "${1:-help}" in
         print_status "Docker services stopped"
         ;;
         
+    "debug-frontend")
+        if ! check_docker; then
+            exit 1
+        fi
+        
+        print_info "Starting frontend debug mode..."
+        
+        # Stop existing services
+        docker-compose down || true
+        
+        print_info "Starting debug environment with enhanced logging..."
+        docker-compose -f docker-compose-frontend-debug.yml up --build -d
+        
+        print_status "Frontend debug environment started!"
+        echo ""
+        print_info "Debug services running:"
+        print_info "Frontend (with logging): http://localhost:80"
+        print_info "Simple fallback: docker-compose -f docker-compose-frontend-debug.yml --profile debug up frontend-simple"
+        print_info "Backend API: http://localhost:8001"
+        echo ""
+        print_info "Debug commands:"
+        print_info "  ./debug-frontend.sh                    # Run frontend diagnostics"
+        print_info "  docker-compose -f docker-compose-frontend-debug.yml logs frontend"
+        print_info "  docker exec -it fleetmanager_frontend_debug /bin/sh"
+        ;;
+        
+    "fix-frontend")
+        if ! check_docker; then
+            exit 1
+        fi
+        
+        print_info "Applying frontend fixes..."
+        
+        # Stop services
+        docker-compose down || true
+        
+        # Clean up problematic containers/images
+        docker container prune -f
+        docker image prune -f
+        
+        # Rebuild with fixed configuration
+        print_info "Rebuilding frontend with fixes..."
+        docker-compose up --build --force-recreate -d
+        
+        print_status "Frontend fixes applied!"
+        echo ""
+        print_info "If issues persist, try:"
+        print_info "  ./docker-start.sh debug-frontend"
+        print_info "  ./debug-frontend.sh"
+        ;;
+        
     "logs")
         if ! check_docker; then
             exit 1
@@ -331,6 +382,8 @@ case "${1:-help}" in
             docker-compose logs -f
         elif docker-compose -f docker-compose.dev.yml ps 2>/dev/null | grep -q "Up"; then
             docker-compose -f docker-compose.dev.yml logs -f
+        elif docker-compose -f docker-compose-frontend-debug.yml ps 2>/dev/null | grep -q "Up"; then
+            docker-compose -f docker-compose-frontend-debug.yml logs -f
         else
             print_warning "No Docker services are currently running"
         fi
