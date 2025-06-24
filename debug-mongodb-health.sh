@@ -131,18 +131,18 @@ if [ -n "$CONTAINER_NAME" ]; then
 fi
 
 echo ""
-print_step "Suggested fixes if MongoDB is unhealthy:"
-echo "1. Wait longer - MongoDB needs time to initialize (60+ seconds)"
-echo "2. Check if authentication is required for health checks"
-echo "3. Use simpler health check without authentication"
-echo "4. Increase health check timeout and start period"
+echo "Suggested fixes if MongoDB is unhealthy:"
+echo "1. MongoDB 7.0 containers often don't have mongosh/mongo - use process check instead"
+echo "2. Use simplified health check: ps aux | grep mongod"
+echo "3. Use alternative configurations without health checks"
+echo "4. Apply the MongoDB health fix: ./fix-mongodb-health.sh"
 echo ""
 echo "Alternative health check configurations:"
-echo "Option 1 (Simple, no auth):"
-echo '  test: ["CMD", "mongosh", "--eval", "db.adminCommand('"'"'ping'"'"')"]'
+echo "Option 1 (Process check - Recommended):"
+echo '  test: ["CMD-SHELL", "ps aux | grep mongod | grep -v grep || exit 1"]'
 echo ""
 echo "Option 2 (No health check):"
 echo "  # Remove healthcheck section entirely"
 echo ""
-echo "Option 3 (TCP check only):"
-echo '  test: ["CMD-SHELL", "nc -z localhost 27017"]'
+echo "Option 3 (Use fixed configuration):"
+echo '  docker-compose -f docker-compose-fixed.yml up -d'
