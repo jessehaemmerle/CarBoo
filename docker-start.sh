@@ -276,6 +276,20 @@ case "${1:-help}" in
         if docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "unhealthy"; then
             print_warning "Some services may be unhealthy. Run './debug-mongodb-health.sh' for help"
         fi
+        
+        # Check specifically for frontend restart issues
+        FRONTEND_CONTAINER=$(docker ps --filter "name=frontend" --format "{{.Names}}" | head -1)
+        if [ -n "$FRONTEND_CONTAINER" ]; then
+            RESTART_COUNT=$(docker inspect "$FRONTEND_CONTAINER" --format='{{.RestartCount}}' 2>/dev/null || echo "0")
+            if [ "$RESTART_COUNT" -gt 2 ]; then
+                print_warning "Frontend container has restarted $RESTART_COUNT times"
+                echo ""
+                echo "🔧 Frontend troubleshooting options:"
+                echo "1. Run frontend debug script: ./debug-frontend.sh"
+                echo "2. Use debug configuration: docker-compose -f docker-compose-frontend-debug.yml up -d"
+                echo "3. Check troubleshooting guide: FRONTEND_TROUBLESHOOTING.md"
+            fi
+        fi
         ;;
         
     "supervisor")
