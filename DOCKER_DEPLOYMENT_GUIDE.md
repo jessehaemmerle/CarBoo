@@ -76,6 +76,10 @@ If Docker is not installed, the system will offer automatic installation:
 
 | Command | Description |
 |---------|-------------|
+| `./install-docker.sh` | **Full Docker installation** - Supports all Linux distributions |
+| `./quick-install-docker.sh` | **Quick Docker installation** - Ubuntu/Debian only |
+| `./install-docker.sh remove` | Remove Docker installation completely |
+| `./install-docker.sh verify` | Verify existing Docker installation |
 | `./docker-start.sh docker-prod` | Start production Docker environment (Port 80) |
 | `./docker-start.sh docker-dev` | Start development Docker environment (Port 3000) |
 | `./docker-start.sh supervisor` | Switch back to supervisor mode |
