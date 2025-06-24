@@ -1,33 +1,23 @@
-FROM python:3.11-slim
-
+FROM python:3.11-slim AS base
 WORKDIR /app
 
-# Install system dependencies including curl for health checks
-RUN apt-get update && apt-get install -y \
-    gcc \
-    curl \
+# System-Dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user for security
-RUN groupadd -r fleetapp && useradd -r -g fleetapp fleetapp
-
-# Copy requirements and install Python dependencies
+# Python-Dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# App-Code
 COPY . .
 
-# Change ownership to non-root user
-RUN chown -R fleetapp:fleetapp /app
-USER fleetapp
+# Berechtigungen (falls nötig)
+# RUN chown -R nobody:nogroup /app
 
-# Expose port
 EXPOSE 8001
 
-# Health check with better timing for production
-HEALTHCHECK --interval=30s --timeout=15s --start-period=90s --retries=5 \
-  CMD curl -f http://localhost:8001/api/health || exit 1
-
-# Start the application with production settings
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
+# Starte dein FastAPI-/Flask-/whatever-Server
+# passe server:app an dein entrypoint-modul an
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8001"]
