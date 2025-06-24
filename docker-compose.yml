@@ -1,21 +1,21 @@
 version: '3.8'
 
 services:
-  # MongoDB Database
+  # --- MongoDB ---
   mongodb:
     image: mongo:7.0
-    container_name: fleetmanager_mongodb
+    container_name: fleetmanager_mongodb_prod
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-fleetmanager123}
-      MONGO_INITDB_DATABASE: fleetmanager
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${DB_NAME}
     ports:
       - "27017:27017"
     volumes:
-      - mongodb_data:/data/db
+      - mongodb_data_prod:/data/db
     networks:
-      - fleetmanager_network
+      - fleetmanager_network_prod
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 30s
@@ -23,59 +23,58 @@ services:
       retries: 3
       start_period: 40s
 
-  # Backend API
+  # --- Backend ---
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.prod
-    container_name: fleetmanager_backend
+    container_name: fleetmanager_backend_prod
     restart: unless-stopped
     environment:
-      - MONGO_URL=mongodb://root:${MONGO_PASSWORD:-fleetmanager123}@mongodb:27017/test_database?authSource=admin
-      - DB_NAME=test_database
-      - JWT_SECRET_KEY=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - MONGO_URL=mongodb://root:${MONGO_PASSWORD}@mongodb:27017/${DB_NAME}?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
       - ENVIRONMENT=production
+      - DB_NAME=${DB_NAME}
     ports:
       - "8001:8001"
     depends_on:
       mongodb:
         condition: service_healthy
     networks:
-      - fleetmanager_network
+      - fleetmanager_network_prod
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
       interval: 30s
-      timeout: 15s
+      timeout: 10s
       retries: 5
-      start_period: 90s
+      start_period: 120s
 
-  # Frontend Web App
+  # --- Frontend ---
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
       args:
-        - REACT_APP_BACKEND_URL=${BACKEND_URL:-http://localhost:8001}
-    container_name: fleetmanager_frontend
+        - REACT_APP_BACKEND_URL=${BACKEND_URL}
+    container_name: fleetmanager_frontend_prod
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${FRONTEND_HOST_PORT}:80"
     depends_on:
       backend:
         condition: service_healthy
     networks:
-      - fleetmanager_network
+      - fleetmanager_network_prod
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
       start_period: 60s
 
 volumes:
-  mongodb_data:
-    driver: local
+  mongodb_data_prod:
 
 networks:
-  fleetmanager_network:
+  fleetmanager_network_prod:
     driver: bridge
