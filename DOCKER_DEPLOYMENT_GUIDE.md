@@ -162,21 +162,37 @@ This will test:
 
 ### Prerequisites
 On your server, ensure you have:
-- Docker installed and running
-- Docker Compose installed
+- Linux system (Ubuntu/Debian, CentOS/RHEL, Fedora, Amazon Linux)
 - Sufficient ports available (80, 8001, 27017)
+- **Docker Installation**: Use our automated scripts if needed
+
+### Automated Docker Installation
+```bash
+# Quick installation (Ubuntu/Debian only)
+./quick-install-docker.sh
+
+# Full installation (supports all Linux distributions)
+./install-docker.sh
+
+# The docker-start.sh script will also offer automatic installation
+./docker-start.sh docker-prod
+```
 
 ### Deployment Steps
 1. **Clone/Upload your repository** to the server
-2. **Run the production setup**:
+2. **Install Docker** (if not already installed):
+   ```bash
+   ./quick-install-docker.sh
+   ```
+3. **Run the production setup**:
    ```bash
    ./docker-start.sh docker-prod
    ```
-3. **Verify deployment**:
+4. **Verify deployment**:
    ```bash
    ./docker-start.sh status
    ```
-4. **Access your application** at `http://your-server-ip` (port 80)
+5. **Access your application** at `http://your-server-ip` (port 80)
 
 ### Port 80 Access
 The frontend is now properly configured to run on port 80, which means:
