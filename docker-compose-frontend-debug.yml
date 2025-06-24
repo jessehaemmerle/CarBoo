@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: fleetmanager_mongodb_debug
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-fleetmanager123}
+      MONGO_INITDB_DATABASE: ${DB_NAME:-fleetmanager}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data_debug:/data/db
+    networks:
+      - fleetmanager_network_debug
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: fleetmanager_backend_debug
+    restart: unless-stopped
+    environment:
+      - MONGO_URL=mongodb://root:${MONGO_PASSWORD:-fleetmanager123}@mongodb:27017/${DB_NAME:-fleetmanager}?authSource=admin
+      - JWT_SECRET=${JWT_SECRET:-debug-jwt-secret}
+      - ENVIRONMENT=production
+      - DB_NAME=${DB_NAME:-fleetmanager}
+    ports:
+      - "8001:8001"
+    depends_on:
+      - mongodb
+    networks:
+      - fleetmanager_network_debug
+
+  # Frontend - Debug Version with Enhanced Logging
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod.fixed
+      args:
+        - REACT_APP_BACKEND_URL=${BACKEND_URL:-http://localhost:8001}
+    container_name: fleetmanager_frontend_debug
+    restart: unless-stopped
+    environment:
+      - NGINX_ENVSUBST_TEMPLATE_SUFFIX=.template
+    ports:
+      - "${FRONTEND_HOST_PORT:-80}:80"
+    depends_on:
+      - backend
+    networks:
+      - fleetmanager_network_debug
+    # Enhanced logging and debugging
+    volumes:
+      - frontend_logs:/var/log/nginx
+    command: ["sh", "-c", "echo 'Starting frontend container...'; nginx -t && nginx -g 'daemon off;' || (echo 'Nginx configuration test failed'; cat /etc/nginx/conf.d/default.conf; exit 1)"]
+
+  # Alternative Frontend - Simple Node.js Server (Fallback)
+  frontend-simple:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fleetmanager_frontend_simple
+    restart: "no"  # Don't auto-restart for debugging
+    environment:
+      - REACT_APP_BACKEND_URL=${BACKEND_URL:-http://localhost:8001}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - fleetmanager_network_debug
+    profiles:
+      - debug
+
+volumes:
+  mongodb_data_debug:
+    driver: local
+  frontend_logs:
+    driver: local
+
+networks:
+  fleetmanager_network_debug:
+    driver: bridge
