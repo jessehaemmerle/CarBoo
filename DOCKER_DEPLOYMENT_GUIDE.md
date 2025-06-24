@@ -30,6 +30,30 @@ The following configuration issues have been corrected:
 
 ## 🚀 Deployment Commands
 
+### Automatic Docker Installation
+If Docker is not installed, the system will offer automatic installation:
+
+```bash
+# The docker-start.sh script will automatically detect missing Docker
+# and offer installation options:
+./docker-start.sh docker-prod
+```
+
+**Manual Docker Installation Options:**
+```bash
+# Quick installation (Ubuntu/Debian)
+./quick-install-docker.sh
+
+# Full installation (all Linux distributions)
+./install-docker.sh
+
+# Remove Docker installation
+./install-docker.sh remove
+
+# Verify Docker installation
+./install-docker.sh verify
+```
+
 ### Production Deployment (Port 80)
 ```bash
 # Deploy with frontend on port 80
