@@ -35,19 +35,61 @@ print_info() {
 # Check if Docker is available
 check_docker() {
     if ! command -v docker &> /dev/null; then
-        print_error "Docker is not installed. Please install Docker first."
-        echo "Install Docker: https://docs.docker.com/get-docker/"
+        print_error "Docker is not installed."
+        echo ""
+        echo "🚀 Auto-Installation Options:"
+        echo "1. Quick installation (Ubuntu/Debian only)"
+        echo "2. Full installation (all Linux distributions)"
+        echo "3. Manual installation"
+        echo "4. Exit"
+        echo ""
+        read -p "Choose option (1-4): " install_choice
+        
+        case $install_choice in
+            1)
+                print_info "Starting quick Docker installation..."
+                if [ -f "./quick-install-docker.sh" ]; then
+                    ./quick-install-docker.sh
+                else
+                    print_error "Quick install script not found"
+                    return 1
+                fi
+                ;;
+            2)
+                print_info "Starting full Docker installation..."
+                if [ -f "./install-docker.sh" ]; then
+                    ./install-docker.sh
+                else
+                    print_error "Full install script not found"
+                    return 1
+                fi
+                ;;
+            3)
+                echo "Manual installation: https://docs.docker.com/get-docker/"
+                return 1
+                ;;
+            4)
+                return 1
+                ;;
+            *)
+                print_error "Invalid choice"
+                return 1
+                ;;
+        esac
+        
+        print_info "Please restart this script after Docker installation completes"
         return 1
     fi
 
     if ! docker info &> /dev/null; then
         print_error "Docker daemon is not running. Please start Docker service."
+        print_info "Try: sudo systemctl start docker"
         return 1
     fi
 
     if ! command -v docker-compose &> /dev/null; then
-        print_error "Docker Compose is not installed. Please install Docker Compose."
-        echo "Install Docker Compose: https://docs.docker.com/compose/install/"
+        print_error "Docker Compose is not installed."
+        print_info "Install Docker Compose: https://docs.docker.com/compose/install/"
         return 1
     fi
 
