@@ -50,7 +50,7 @@ services:
       - REACT_APP_BACKEND_URL=${BACKEND_URL:-http://localhost:8001}
       - CHOKIDAR_USEPOLLING=true
     ports:
-      - "3000:3000"
+      - "${FRONTEND_HOST_PORT:-3000}:3000"
     depends_on:
       - backend
     volumes:
