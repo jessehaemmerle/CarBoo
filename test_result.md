@@ -788,8 +788,24 @@ agent_communication:
 
 ### Usage Instructions ✅
 
+**Install Docker (if needed)**:
+```bash
+# Quick installation (Ubuntu/Debian)
+./quick-install-docker.sh
+
+# Full installation (all Linux distributions)
+./install-docker.sh
+
+# Remove Docker installation
+./install-docker.sh remove
+
+# Verify installation
+./install-docker.sh verify
+```
+
 **Deploy with Frontend on Port 80**:
 ```bash
+# Auto-detects and offers Docker installation if needed
 ./docker-start.sh docker-prod
 ```
 
@@ -803,7 +819,7 @@ agent_communication:
 ./validate-docker-config.sh
 ```
 
-**Application Status**: ✅ Ready for Docker deployment on any server with frontend exposed on port 80
+**Application Status**: ✅ Ready for Docker deployment on any Linux server with complete Docker installation automation and frontend exposed on port 80
 
 ## Continuation Task: Docker Containerization
 
