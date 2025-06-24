@@ -15,17 +15,6 @@ services:
       - mongodb_data_prod:/data/db
     networks:
       - fleetmanager_network_prod
-    healthcheck:
-      test: >
-        ["CMD-SHELL",
-         "mongosh -u $MONGO_INITDB_ROOT_USERNAME \
-                   -p $MONGO_INITDB_ROOT_PASSWORD \
-                   --authenticationDatabase admin \
-                   --eval \"db.adminCommand('ping')\""]
-      interval: 30s
-      timeout: 10s
-      start_period: 40s
-      retries: 5
 
 
   # --- Backend ---
