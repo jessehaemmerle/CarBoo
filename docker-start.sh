@@ -84,6 +84,7 @@ create_docker_env() {
 
 # Database Configuration
 MONGO_PASSWORD=${MONGO_PASSWORD}
+DB_NAME=fleetmanager
 
 # Security Configuration  
 JWT_SECRET=${JWT_SECRET}
@@ -94,6 +95,7 @@ ENVIRONMENT=production
 
 # Frontend Configuration
 REACT_APP_BACKEND_URL=http://localhost:8001
+FRONTEND_HOST_PORT=80
 EOF
         
         print_status ".env file created with secure configuration"
