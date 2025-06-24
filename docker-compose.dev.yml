@@ -16,12 +16,13 @@ services:
       - mongodb_data_dev:/data/db
     networks:
       - fleetmanager_network_dev
+    # Simple health check using built-in tools only
     healthcheck:
-      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/localhost/27017' || exit 1"]
+      test: ["CMD-SHELL", "ps aux | grep mongod | grep -v grep || exit 1"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
-      start_period: 40s
+      start_period: 30s
 
   # Backend API (Development)
   backend:
