@@ -163,7 +163,7 @@ else
     print_fail "Frontend health check endpoint missing"
 fi
 
-if grep -q "/api/health" backend/server.py; then
+if grep -q "@api_router.get(\"/health\")" backend/server.py; then
     print_pass "Backend health check endpoint exists"
 else
     print_fail "Backend health check endpoint missing"
