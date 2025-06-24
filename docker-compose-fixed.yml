@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: fleetmanager_mongodb_prod_fixed
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data_prod:/data/db
+    networks:
+      - fleetmanager_network_prod
+    # No health check - MongoDB 7.0 containers often don't have mongosh/mongo/nc
+
+  # --- Backend ---
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: fleetmanager_backend_prod_fixed
+    restart: unless-stopped
+    environment:
+      - MONGO_URL=mongodb://root:${MONGO_PASSWORD}@mongodb:27017/${DB_NAME}?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
+      - ENVIRONMENT=production
+      - DB_NAME=${DB_NAME}
+    ports:
+      - "8001:8001"
+    depends_on:
+      - mongodb
+    networks:
+      - fleetmanager_network_prod
+    # Wait for MongoDB to be ready (backend will retry connections)
+    command: ["sh", "-c", "sleep 15 && python server.py"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+
+  # --- Frontend ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        - REACT_APP_BACKEND_URL=${BACKEND_URL}
+    container_name: fleetmanager_frontend_prod_fixed
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_HOST_PORT}:80"
+    depends_on:
+      - backend
+    networks:
+      - fleetmanager_network_prod
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  mongodb_data_prod:
+
+networks:
+  fleetmanager_network_prod:
+    driver: bridge
