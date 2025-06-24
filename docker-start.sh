@@ -181,7 +181,7 @@ case "${1:-help}" in
         print_status "Docker production environment started!"
         echo ""
         print_info "Services are now running in optimized Docker containers"
-        print_info "Frontend: http://localhost:3000"
+        print_info "Frontend: http://localhost:80"
         print_info "Backend API: http://localhost:8001"
         print_info "API Docs: http://localhost:8001/docs"
         ;;
