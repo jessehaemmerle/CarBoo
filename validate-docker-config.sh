@@ -3,8 +3,6 @@
 # Docker Configuration Validation Script
 # This script validates all Docker configuration files and environment settings
 
-set -e
-
 echo "🚗 Fleet Management - Docker Configuration Validator"
 echo "==================================================="
 
@@ -25,12 +23,12 @@ print_test() {
 
 print_pass() {
     echo -e "${GREEN}✅ PASS:${NC} $1"
-    ((PASSED++))
+    PASSED=$((PASSED + 1))
 }
 
 print_fail() {
     echo -e "${RED}❌ FAIL:${NC} $1"
-    ((FAILED++))
+    FAILED=$((FAILED + 1))
 }
 
 print_warn() {
