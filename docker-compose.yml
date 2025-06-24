@@ -15,6 +15,12 @@ services:
       - mongodb_data_prod:/data/db
     networks:
       - fleetmanager_network_prod
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
 
   # --- Backend ---
