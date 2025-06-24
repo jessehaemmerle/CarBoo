@@ -253,10 +253,10 @@ case "${1:-help}" in
                     ;;
                 3)
                     print_info "Starting MongoDB health debug..."
-                    if [ -f "./debug-mongodb-health.sh" ]; then
-                        ./debug-mongodb-health.sh
+                    if [ -f "./fix-mongodb-health.sh" ]; then
+                        ./fix-mongodb-health.sh
                     else
-                        print_error "Debug script not found"
+                        print_error "MongoDB fix script not found"
                     fi
                     echo "See MONGODB_HEALTH_TROUBLESHOOTING.md for detailed help"
                     exit 1
