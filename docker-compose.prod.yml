@@ -16,7 +16,6 @@ services:
     networks:
       - fleetmanager_network_prod
     healthcheck:
-      # Jetzt mit Auth: Benutzer und Passwort aus den ENV-Vars
       test: >
         ["CMD-SHELL",
          "mongosh -u $MONGO_INITDB_ROOT_USERNAME \
@@ -25,8 +24,8 @@ services:
                    --eval \"db.adminCommand('ping')\""]
       interval: 30s
       timeout: 10s
-      retries: 5
       start_period: 40s
+      retries: 5
 
 
   # --- Backend ---
